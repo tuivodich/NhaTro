@@ -10,6 +10,7 @@ import { uploadImage } from "../lib/listings";
 import { isStaffRole, type Contract, type Invoice, type Ticket } from "../lib/types";
 import Money from "../components/Money";
 import { ContactBox, PublicHeader } from "./Landing";
+import { cancelRequest, useMyRequests } from "../components/RequestForm";
 
 function useMine<T>(name: string, field: string, op: "==" | "array-contains", uid?: string) {
   const [d, setD] = useState<T[]>([]);
@@ -33,6 +34,7 @@ export default function Account() {
   const [tk, setTk] = useState({ title: "", detail: "" });
   const [photo, setPhoto] = useState<File | null>(null);
   const [tgUrl, setTgUrl] = useState("");
+  const myReqs = useMyRequests();
   if (loading) return <div className="center">Đang tải…</div>;
   if (!user) return <Navigate to="/dang-nhap?next=/tai-khoan" replace />;
   const today = todayStr();
@@ -64,6 +66,15 @@ export default function Account() {
         <div className="row between"><h2>Xin chào {profile?.name || user.email}</h2><button className="ghost" onClick={logout}>Đăng xuất</button></div>
         {isStaffRole(profile?.role) && <p><Link to="/app">→ Vào trang quản lý</Link></p>}
         {msg && <p className="card">{msg}</p>}
+
+        {myReqs.length > 0 && (
+          <div className="card">
+            <h3>Đăng ký thuê của tôi</h3>
+            <ul>{myReqs.map((r) => (
+              <li key={r.id}><Link to={`/phong/${r.roomId}`}>{r.roomName || r.roomCode}</Link> · {r.propertyName} — <span className={`tag rq-${r.status}`}>{L.requestStatus[r.status]}</span>
+                {(r.status === "moi" || r.status === "da_lien_he") && <> <button className="ghost danger" onClick={() => cancelRequest(r.id)}>Hủy</button></>}</li>))}</ul>
+          </div>
+        )}
 
         {!active.length && !isStaffRole(profile?.role) && (
           <form className="card" onSubmit={claim}>

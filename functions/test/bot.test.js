@@ -36,7 +36,7 @@ const contract = {
 };
 
 async function reset() {
-  for (const c of ["users", "properties", "rooms", "contracts", "tenants", "invoices", "meterReadings", "tickets", "tgChats", "tgTenants", "tgLinks", "tgSent", "tgRate", "settings", "bankTx", "auditLog", "listings"]) {
+  for (const c of ["users", "properties", "rooms", "contracts", "tenants", "invoices", "meterReadings", "tickets", "tgChats", "tgTenants", "tgLinks", "tgSent", "tgRate", "settings", "bankTx", "auditLog", "listings", "rentalRequests"]) {
     const s = await db.collection(c).get();
     await Promise.all(s.docs.map((d) => d.ref.delete()));
   }
@@ -246,4 +246,32 @@ test("dailyReport: gửi chủ (không gửi nhân viên)", async () => {
   assert.equal((await bot.dailyReport()).sent, 1);
   assert.match(tg.sent[0].text, /Tiền vào hôm nay: <b>500\.000 đ/);
   assert.equal(tg.sent[0].chat, "111");
+});
+
+test("đăng ký thuê: báo chủ + nhân viên khu A (không báo khu B), một lần; nút giữ chỗ gỡ phòng khỏi trang công khai", async () => {
+  await reset();
+  const { tg, bot } = mk();
+  const { Timestamp } = require("firebase-admin/firestore");
+  await db.doc("tgChats/777").set({ uid: "stA" });
+  await db.doc("listings/rA2").set({ propertyId: "A", code: "P2", rent: 2800000 });
+  await db.doc("rentalRequests/ten1_rA2").set({ roomId: "rA2", propertyId: "A", roomCode: "P2", propertyName: "43/48 Cộng Hòa", name: "Bình <b>", phone: "0909 123 456", people: 2, moveIn: "2026-12-01", status: "moi", createdBy: "ten1", createdAt: Timestamp.fromMillis(1) });
+  assert.equal((await bot.notifyRequest("ten1_rA2")).sent, 2);
+  assert.deepEqual(tg.sent.map((x) => x.chat).sort(), ["111", "777"]);
+  assert.match(tg.sent[0].text, /Bình &lt;b&gt;/);
+  assert.equal(tg.sent[0].extra.reply_markup.inline_keyboard[0].length, 3);
+  assert.equal((await bot.notifyRequest("ten1_rA2")).duplicate, true);
+  // Nhân viên không giữ chỗ được, nhân viên khu khác không đụng được
+  await bot.handleUpdate(press(777, "rqh:ten1_rA2"));
+  assert.match(tg.answers.at(-1).text, /Chỉ chủ\/quản lý/);
+  await bot.handleUpdate(press(222, "rqc:ten1_rA2"));
+  assert.match(tg.answers.at(-1).text, /không phụ trách/);
+  await bot.handleUpdate(press(777, "rqc:ten1_rA2"));
+  assert.equal((await db.doc("rentalRequests/ten1_rA2").get()).data().status, "da_lien_he");
+  await bot.handleUpdate(press(111, "rqh:ten1_rA2"));
+  assert.equal((await db.doc("rentalRequests/ten1_rA2").get()).data().status, "giu_cho");
+  assert.equal((await db.doc("rooms/rA2").get()).data().status, "giu_cho");
+  assert.equal((await db.doc("listings/rA2").get()).exists, false);
+  // Gửi lại sau khi hủy (createdAt mới) thì báo lại
+  await db.doc("rentalRequests/ten1_rA2").update({ status: "moi", createdAt: Timestamp.fromMillis(2) });
+  assert.equal((await bot.notifyRequest("ten1_rA2")).sent, 2);
 });

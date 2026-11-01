@@ -41,7 +41,7 @@ export default function ContractsPage() {
     setNc({ propertyId: pid, roomId: "", mainTenantId: "", others: [], start: today, months: 12, rent: 0, deposit: 0, services: byId[pid]?.services ?? [], meters: {}, note: "" });
   };
   const vacantRooms = useMemo(() => rooms.filter((r) => r.propertyId === nc?.propertyId && !contracts.some((c) => c.roomId === r.id && c.status === "hieu_luc")), [rooms, contracts, nc?.propertyId]);
-  const propTenants = tenants.filter((t) => t.propertyId === nc?.propertyId);
+  const propTenants = tenants.filter((t) => t.propertyId === nc?.propertyId).sort((a, b) => a.fullName.localeCompare(b.fullName, "vi"));
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();

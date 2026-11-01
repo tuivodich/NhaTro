@@ -131,7 +131,7 @@ try {
   await own.getByRole("button", { name: "+ Hợp đồng mới" }).click();
   await field(own, "Khu").selectOption("conghoa");
   await field(own, "Phòng trống").selectOption({ label: "P1 — Phòng 1" });
-  await field(own, "Người đứng tên").selectOption({ index: 1 });
+  await field(own, "Người đứng tên").selectOption({ label: "Nguyễn Văn An · 0901234567" });
   await field(own, "Ngày bắt đầu").fill("01/10/2026");
   await own.locator("fieldset", { hasText: "Chỉ số đầu" }).locator("label", { hasText: "Điện" }).locator("input").fill("1000");
   await own.locator("fieldset", { hasText: "Chỉ số đầu" }).locator("label", { hasText: "Nước" }).locator("input").fill("50");
@@ -200,6 +200,34 @@ try {
   // 12) Báo cáo thu chi tháng có khoản đã thu
   await own.goto(BASE + "/app/thu-chi");
   ok("báo cáo ghi nhận 1.000.000 đ đã thu", await own.locator(".card", { hasText: "Đã thu tiền nhà" }).filter({ hasText: "1.000.000" }).waitFor({ timeout: 10000 }).then(() => true, () => false));
+  // 13) Khách xem trang công khai → đăng nhập → đăng ký thuê P2 → chủ giữ chỗ → P2 rời trang chủ
+  const guest = await newUser("khach@nhatro.vn");
+  await guest.waitForURL("**/tai-khoan");
+  await guest.goto(BASE + "/");
+  await guest.getByText("Xem & đăng ký thuê").first().click();
+  await guest.getByRole("button", { name: "📝 Đăng ký thuê phòng này" }).click();
+  await field(guest, "Họ và tên").fill("Lê Văn Khách");
+  await field(guest, "Số điện thoại").fill("0912 345 678");
+  await field(guest, "Số người ở").fill("2");
+  await field(guest, "Ghi chú").fill("Đi làm ca tối");
+  await guest.getByRole("button", { name: "Gửi đăng ký" }).click();
+  ok("khách gửi đăng ký thuê", await guest.getByText("Yêu cầu của bạn").waitFor({ timeout: 10000 }).then(() => true, () => false));
+  ok("khách thấy trạng thái Mới", (await guest.locator(".card.request").textContent()).includes("Mới"));
+  await own.getByRole("link", { name: /Đăng ký thuê/ }).click();
+  await own.getByText("Lê Văn Khách").waitFor();
+  ok("chủ thấy số đăng ký mới trên menu", (await own.locator(".navbadge").textContent()).trim() === "1");
+  await own.getByRole("button", { name: "✅ Giữ chỗ" }).click();
+  await own.locator(".card", { hasText: "Lê Văn Khách" }).getByText("Đang giữ chỗ").waitFor();
+  ok("chủ giữ chỗ", true);
+  await own.getByRole("button", { name: "Tạo hồ sơ người thuê" }).click();
+  ok("tạo hồ sơ người thuê từ đăng ký", await own.getByText(/Đã tạo hồ sơ Lê Văn Khách/).waitFor({ timeout: 10000 }).then(() => true, () => false));
+  const pub2 = await (await browser.newContext()).newPage();
+  await pub2.goto(BASE + "/");
+  await pub2.getByText(/Hiện đã hết phòng trống|Đang cho thuê/).first().waitFor();
+  await pub2.waitForTimeout(1000);
+  ok("phòng đang giữ chỗ không còn trên trang chủ", !(await pub2.getByText("Phòng 2").count()));
+  await guest.goto(BASE + "/tai-khoan");
+  ok("khách thấy “Đang giữ chỗ” trong tài khoản", await guest.locator(".card", { hasText: "Đăng ký thuê của tôi" }).getByText("Đang giữ chỗ").waitFor({ timeout: 10000 }).then(() => true, () => false));
 } catch (e) {
   fail++; console.log("FAIL (ngoại lệ)", e.message.split("\n").slice(0, 3).join(" | "));
   for (const c of browser.contexts()) for (const pg of c.pages()) await pg.screenshot({ path: `/tmp/claude-0/e2e-${Date.now()}.png`, fullPage: true }).catch(() => {});

@@ -73,5 +73,13 @@ export interface Invoice {
 
 export interface Txn { id: string; propertyId: string; date: string; type: "thu" | "chi"; category: string; amount: number; note?: string; by?: string }
 
+/** Đăng ký thuê / hẹn xem phòng từ trang công khai (id: `${uid}_${roomId}` — mỗi người một yêu cầu cho mỗi phòng). */
+export type RequestStatus = "moi" | "da_lien_he" | "giu_cho" | "da_thue" | "tu_choi" | "huy";
+export interface RentalRequest {
+  id: string; roomId: string; propertyId: string; roomCode: string; roomName?: string; propertyName: string;
+  name: string; phone: string; people: number; moveIn?: string; viewAt?: string; note?: string;
+  status: RequestStatus; createdBy: string; createdAt?: { toMillis(): number }; staffNote?: string; handledBy?: string; handledOn?: string;
+}
+
 export type TicketStatus = "moi" | "dang_xu_ly" | "xong" | "huy";
 export interface Ticket { id: string; propertyId: string; roomId: string; roomCode?: string; contractId?: string; title: string; detail?: string; photos?: string[]; status: TicketStatus; cost?: number; createdBy: string; createdName?: string; createdOn: string; doneOn?: string }

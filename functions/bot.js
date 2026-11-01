@@ -359,7 +359,7 @@ function createBot({ db, tg, now = () => new Date(), randomCode, mem = new Map()
     const chatId = String(cb.message?.chat?.id ?? "");
     if (!memAllow(mem, chatId, now().getTime())) return;
     const [action, id] = String(cb.data ?? "").split(":");
-    if (!["pay", "rs", "tk"].includes(action) || !id) return tg.answerCallbackQuery(cb.id, "Thao tác không hợp lệ");
+    if (!["pay", "rs", "tk", "rqc", "rqh", "rqr"].includes(action) || !id) return tg.answerCallbackQuery(cb.id, "Thao tác không hợp lệ");
     const link = await get(`tgChats/${chatId}`);
     const u = link && (await get(`users/${link.uid}`));
     if (!u || !STAFF.includes(u.role)) return tg.answerCallbackQuery(cb.id, "Chat chưa liên kết hoặc không đủ quyền");
@@ -371,10 +371,51 @@ function createBot({ db, tg, now = () => new Date(), randomCode, mem = new Map()
     } else if (action === "rs") {
       const inv = await get(`invoices/${id}`);
       r = !inv || !canProp(u, inv.propertyId) ? { ok: false, text: "Không đủ quyền." } : { ok: true, text: `📨 Đã gửi lại cho ${(await sendInvoice(id, { force: true })).sent} chat người thuê.` };
+    } else if (action.startsWith("rq")) {
+      r = await handleRequest(id, action === "rqc" ? "da_lien_he" : action === "rqh" ? "giu_cho" : "tu_choi", u, actor);
     } else r = await closeTicket(id, u, actor);
     await tg.answerCallbackQuery(cb.id, r.ok ? "Đã xong" : r.text.replace(/<[^>]+>/g, "").slice(0, 150));
     if (cb.message && action !== "rs") await tg.editMessageText(chatId, cb.message.message_id, `${esc(cb.message.text ?? "")}\n\n${r.text}`, { reply_markup: { inline_keyboard: [] } }).catch(() => {});
     else if (action === "rs") await send(chatId, r.text);
+  }
+
+  // ===== Đăng ký thuê / hẹn xem phòng =====
+  const REQ_VI = { moi: "Mới", da_lien_he: "Đã liên hệ", giu_cho: "Đang giữ chỗ", da_thue: "Đã ký hợp đồng", tu_choi: "Từ chối", huy: "Đã hủy" };
+  const requestButtons = (id) => ({ reply_markup: { inline_keyboard: [[{ text: "📞 Đã liên hệ", callback_data: `rqc:${id}` }, { text: "✅ Giữ chỗ", callback_data: `rqh:${id}` }, { text: "❌ Từ chối", callback_data: `rqr:${id}` }]] } });
+
+  /** Báo chủ/quản lý/nhân viên của khu khi có yêu cầu mới (hoặc gửi lại sau khi hủy); mỗi lần gửi chỉ báo một lần. */
+  async function notifyRequest(id) {
+    const r = await get(`rentalRequests/${id}`);
+    if (!r || r.status !== "moi") return { sent: 0 };
+    const stamp = r.createdAt?.toMillis?.() ?? 0;
+    if (!(await once(`rq_${id}_${stamp}`))) return { sent: 0, duplicate: true };
+    const text = [
+      `📝 <b>Đăng ký thuê mới</b> · ${esc(r.propertyName)} · phòng <b>${esc(r.roomCode)}</b>`,
+      `👤 ${esc(r.name)} · 📞 <a href="tel:${esc(r.phone.replace(/[^0-9+]/g, ""))}">${esc(r.phone)}</a> · ${r.people} người`,
+      r.moveIn ? `Muốn dọn vào: ${fmtDate(r.moveIn)}` : "",
+      r.viewAt ? `Hẹn xem phòng: ${esc(r.viewAt.replace("T", " "))}` : "",
+      r.note ? `Ghi chú: ${esc(r.note)}` : "",
+    ].filter(Boolean).join("\n");
+    return { sent: await notifyManagers(text, requestButtons(id), r.propertyId, true) };
+  }
+
+  /** Xử lý yêu cầu từ nút Telegram. Giữ chỗ: phòng chuyển "giữ chỗ" và gỡ khỏi trang công khai (chỉ chủ/quản lý). */
+  async function handleRequest(id, status, u, actor) {
+    const ref = db.doc(`rentalRequests/${id}`);
+    const r = (await ref.get()).data();
+    if (!r) return { ok: false, text: "Không tìm thấy yêu cầu." };
+    if (!canProp(u, r.propertyId)) return { ok: false, text: "Bạn không phụ trách khu này." };
+    if (["huy", "da_thue"].includes(r.status)) return { ok: false, text: `Yêu cầu đã ${REQ_VI[r.status].toLowerCase()}.` };
+    if (status === "giu_cho") {
+      if (!manages(u, r.propertyId)) return { ok: false, text: "Chỉ chủ/quản lý được giữ chỗ." };
+      const room = await get(`rooms/${r.roomId}`);
+      if (!room || room.status !== "trong") return { ok: false, text: "Phòng không còn trống." };
+      await db.doc(`rooms/${r.roomId}`).update({ status: "giu_cho" });
+      await db.doc(`listings/${r.roomId}`).delete().catch(() => {});
+    }
+    await ref.update({ status, handledBy: actor, handledOn: todayVN(now()) });
+    await audit(actor, "request.status", `Đăng ký thuê ${r.roomCode} — ${r.name}: ${REQ_VI[status]}`, { type: "rentalRequest", id });
+    return { ok: true, text: `${status === "giu_cho" ? "✅" : status === "tu_choi" ? "❌" : "📞"} ${esc(actor)}: ${REQ_VI[status]}${status === "giu_cho" ? " (đã gỡ phòng khỏi trang công khai)" : ""}.` };
   }
 
   async function handleUpdate(update) {
@@ -453,7 +494,7 @@ function createBot({ db, tg, now = () => new Date(), randomCode, mem = new Map()
     return (await Promise.allSettled(chats.map((c) => send(c.id, text, extra)))).filter((r) => r.status === "fulfilled").length;
   }
 
-  return { handleUpdate, linkCode, sendInvoice, notifyManagers, notifyTenants, reminders, dailyReport };
+  return { handleUpdate, linkCode, sendInvoice, notifyManagers, notifyTenants, notifyRequest, reminders, dailyReport };
 }
 
 module.exports = { createBot, webhookSecret, STAFF_COMMANDS, TENANT_COMMANDS, PUBLIC_COMMANDS };

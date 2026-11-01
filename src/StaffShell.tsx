@@ -4,6 +4,9 @@ import { useI18n } from "./i18n";
 import { isAdminRole, isStaffRole } from "./lib/types";
 import { PropertyProvider, useProps } from "./lib/scoped";
 import Dropdown, { type DdItem } from "./components/Dropdown";
+import RequestsPage from "./pages/RequestsPage";
+import { useScoped } from "./lib/scoped";
+import type { RentalRequest } from "./lib/types";
 import Dashboard from "./pages/Dashboard";
 import PropertiesPage from "./pages/PropertiesPage";
 import RoomsPage from "./pages/RoomsPage";
@@ -18,6 +21,11 @@ import AccountsPage from "./pages/AccountsPage";
 import SettingsPage from "./pages/SettingsPage";
 import BankTxPage from "./pages/BankTxPage";
 import AuditPage from "./pages/AuditPage";
+
+function RequestsLink() {
+  const n = useScoped<RentalRequest>("rentalRequests").data.filter((r) => r.status === "moi").length;
+  return <NavLink to="/app/dang-ky">Đăng ký thuê{n > 0 && <span className="navbadge">{n}</span>}</NavLink>;
+}
 
 function PropPicker() {
   const { props, current, setCurrent } = useProps();
@@ -69,6 +77,7 @@ export default function StaffShell() {
           <NavLink to="/app" end>Tổng quan</NavLink>
           {owner && <NavLink to="/app/khu">Khu nhà trọ</NavLink>}
           <NavLink to="/app/phong">Phòng</NavLink>
+          <RequestsLink />
           <Dropdown className="st-dd" label="Người thuê" items={peopleItems} active={isIn("/app/nguoi-thue", "/app/tam-tru", "/app/hop-dong")} />
           <NavLink to="/app/chi-so">Điện nước</NavLink>
           <Dropdown className="st-dd" label="Tài chính" items={moneyItems} active={isIn("/app/hoa-don", "/app/thu-chi", "/app/ngan-hang")} />
@@ -79,6 +88,7 @@ export default function StaffShell() {
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="phong" element={<RoomsPage />} />
+            <Route path="dang-ky" element={<RequestsPage />} />
             <Route path="hop-dong" element={<ContractsPage />} />
             <Route path="chi-so" element={<MetersPage />} />
             <Route path="hoa-don" element={<InvoicesPage />} />

@@ -5,7 +5,7 @@ import { useProps, useScoped } from "../lib/scoped";
 import { debts, debtAging, expiringContracts, monthSummary, occupancy } from "../lib/report";
 import { fmtDate, thisPeriod, todayStr } from "../lib/format";
 import { seedProperties, SEED } from "../lib/seed";
-import { isAdminRole, type Contract, type Invoice, type Room, type Ticket, type Txn } from "../lib/types";
+import { isAdminRole, type RentalRequest, type Contract, type Invoice, type Room, type Ticket, type Txn } from "../lib/types";
 import Money from "../components/Money";
 
 export default function Dashboard() {
@@ -17,6 +17,7 @@ export default function Dashboard() {
   const contracts = useScoped<Contract>("contracts").data.filter((c) => inScope(c.propertyId));
   const tickets = useScoped<Ticket>("tickets").data.filter((k) => inScope(k.propertyId) && (k.status === "moi" || k.status === "dang_xu_ly"));
   const txns = useScoped<Txn>("transactions", admin).data.filter((t) => inScope(t.propertyId));
+  const newReqs = useScoped<RentalRequest>("rentalRequests").data.filter((r) => inScope(r.propertyId) && r.status === "moi").length;
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const today = todayStr();
@@ -54,6 +55,7 @@ export default function Dashboard() {
         <div className="card"><small>Đang thuê</small><big>{occ.rented}/{occ.total}</big><small>Trống {occ.vacant} · lấp đầy {Math.round(occ.rate * 100)}%</small></div>
         <div className="card"><small>Còn phải thu</small><big><Money v={aging.total} /></big><small>Quá hạn: <Money v={aging.d30 + aging.d60 + aging.over60} /></small></div>
         {admin && <div className="card"><small>Đã thu tháng này</small><big><Money v={month.collected} /></big><small>Chi: <Money v={month.expense} /> · Lãi: <Money v={month.profit} /></small></div>}
+        <div className="card"><small>Đăng ký thuê mới</small><big>{newReqs}</big><Link to="/app/dang-ky">Xem</Link></div>
         <div className="card"><small>Báo hỏng đang mở</small><big>{tickets.length}</big><Link to="/app/bao-hong">Xem</Link></div>
       </div>
 

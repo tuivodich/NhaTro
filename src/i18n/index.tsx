@@ -14,6 +14,7 @@ export const vi = {
   payMethod: { cash: "Tiền mặt", bank: "Chuyển khoản", other: "Khác" },
   gender: { nam: "Nam", nu: "Nữ", "": "—" },
   docType: { cccd: "Căn cước công dân (CCCD)", cmnd: "Chứng minh nhân dân (CMND cũ)", passport: "Hộ chiếu" },
+  requestStatus: { moi: "Mới", da_lien_he: "Đã liên hệ", giu_cho: "Đang giữ chỗ", da_thue: "Đã ký hợp đồng", tu_choi: "Từ chối", huy: "Đã hủy" },
   docTypeShort: { cccd: "CCCD", cmnd: "CMND", passport: "Hộ chiếu" },
 };
 export type Dict = typeof vi;

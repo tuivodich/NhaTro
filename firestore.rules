@@ -124,6 +124,31 @@ service cloud.firestore {
       allow update: if manages(resource.data.propertyId) && sameProp() && request.resource.data.type in ['thu', 'chi'];
     }
 
+    // Đăng ký thuê / hẹn xem phòng từ trang công khai. Phải đăng nhập (chống spam); mỗi người một yêu cầu cho mỗi phòng
+    // (id = uid_roomId); chỉ cho phòng đang đăng công khai; người gửi chỉ hủy được, hoặc gửi lại sau khi đã hủy.
+    match /rentalRequests/{id} {
+      function listing() { return get(/databases/$(database)/documents/listings/$(request.resource.data.roomId)).data; }
+      function validRequest() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['roomId', 'propertyId', 'roomCode', 'roomName', 'propertyName', 'name', 'phone', 'people', 'moveIn', 'viewAt', 'note', 'status', 'createdBy', 'createdAt'])
+          && d.createdBy == request.auth.uid && id == request.auth.uid + '_' + d.roomId && d.status == 'moi' && d.createdAt == request.time
+          && d.name is string && d.name.size() > 0 && d.name.size() <= 100
+          && d.phone is string && d.phone.matches('^[0-9+ .]{8,15}$')
+          && d.people is int && d.people >= 1 && d.people <= 20
+          && (!('note' in d) || (d.note is string && d.note.size() <= 1000))
+          && exists(/databases/$(database)/documents/listings/$(d.roomId)) && listing().propertyId == d.propertyId;
+      }
+      allow read: if canProp(resource.data.propertyId) || (signedIn() && resource.data.createdBy == request.auth.uid);
+      allow create: if signedIn() && validRequest();
+      allow update: if (canProp(resource.data.propertyId) && sameProp() && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'staffNote', 'handledBy', 'handledOn'])
+          && request.resource.data.status in ['moi', 'da_lien_he', 'giu_cho', 'da_thue', 'tu_choi', 'huy'])
+        || (signedIn() && resource.data.createdBy == request.auth.uid && resource.data.status in ['moi', 'da_lien_he']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) && request.resource.data.status == 'huy')
+        || (signedIn() && resource.data.createdBy == request.auth.uid && resource.data.status == 'huy' && validRequest());
+      allow delete: if manages(resource.data.propertyId);
+    }
+
     // Báo hỏng: nhân viên của khu; người thuê tạo cho đúng phòng trong hợp đồng của mình và xem phiếu mình gửi.
     match /tickets/{id} {
       function contract() { return get(/databases/$(database)/documents/contracts/$(request.resource.data.contractId)).data; }

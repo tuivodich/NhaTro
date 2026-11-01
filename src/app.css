@@ -85,3 +85,9 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9em; }
 .docbox .docimg { width: 100%; height: 120px; }
 .doctypes label.check { min-width: 0; }
 .muted { color: var(--muted); }
+.navbadge { display: inline-block; min-width: 18px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--danger); color: #fff; font-size: .75rem; text-align: center; }
+.btnlink.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 600; }
+.btnlink.small { padding: 4px 10px; font-size: .85rem; align-self: flex-start; }
+.card.request { border-color: var(--accent); }
+.tag.rq-moi { background: #fdeccb; color: #8a5a00; } .tag.rq-da_lien_he { background: #dbeafe; color: #1e40af; }
+.tag.rq-giu_cho, .tag.rq-da_thue { background: #d6f0dc; color: #166534; } .tag.rq-tu_choi, .tag.rq-huy { background: #fee2e2; color: #991b1b; }
