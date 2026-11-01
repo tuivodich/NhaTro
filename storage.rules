@@ -1,0 +1,35 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function user() { return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data; }
+    function role() { return request.auth != null ? user().role : 'none'; }
+    function inProp(pid) { return pid in user().get('props', {}); }
+    function canProp(pid) { return role() == 'owner' || (role() in ['manager', 'staff'] && inProp(pid)); }
+    function manages(pid) { return role() == 'owner' || (role() == 'manager' && inProp(pid)); }
+    function isImage() { return request.resource.size < 8 * 1024 * 1024 && request.resource.contentType.matches('image/.*'); }
+
+    // Ảnh phòng: công khai (trang phòng trống); quản lý của khu tải lên/xóa. Đường dẫn: rooms/{propertyId}/{roomId}/{file}
+    match /rooms/{pid}/{roomId}/{file} {
+      allow read: if true;
+      allow create, update: if manages(pid) && isImage();
+      allow delete: if manages(pid);
+    }
+    // Ảnh CCCD / chân dung người thuê: CHỈ chủ/quản lý của khu. Đường dẫn: tenants/{propertyId}/{tenantId}/{file}
+    match /tenants/{pid}/{tenantId}/{file} {
+      allow read, delete: if manages(pid);
+      allow create, update: if manages(pid) && isImage();
+    }
+    // Ảnh đồng hồ điện nước: nhân viên của khu. Đường dẫn: meters/{propertyId}/{file}
+    match /meters/{pid}/{file} {
+      allow read: if canProp(pid);
+      allow create, update: if canProp(pid) && isImage();
+      allow delete: if manages(pid);
+    }
+    // Ảnh báo hỏng: người gửi tải vào thư mục của mình; nhân viên xem. Đường dẫn: tickets/{uid}/{file}
+    match /tickets/{uid}/{file} {
+      allow read: if request.auth != null && (request.auth.uid == uid || role() in ['owner', 'manager', 'staff']);
+      allow create: if request.auth != null && request.auth.uid == uid && isImage();
+      allow delete: if role() in ['owner', 'manager'];
+    }
+  }
+}

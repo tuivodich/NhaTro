@@ -1,0 +1,13 @@
+{
+  "name": "nhatro-functions",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Cloud Functions cho NhaTro: bot Telegram, phát hành hóa đơn, webhook ngân hàng, nhắc việc, sao lưu",
+  "main": "index.js",
+  "engines": { "node": "22" },
+  "scripts": { "test": "node --test --test-concurrency=1 test/*.test.js" },
+  "dependencies": {
+    "firebase-admin": "^13.0.0",
+    "firebase-functions": "^6.3.0"
+  }
+}
