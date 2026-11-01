@@ -34,4 +34,5 @@ jobs:
           npm ci --prefix functions
           # Token bot nằm trong Secret Manager, không trong mã nguồn. Chưa có bot thì lưu "-" (các hàm khác vẫn chạy).
           printf '%s' "${BOT_TOKEN:--}" | npx firebase-tools functions:secrets:set TELEGRAM_BOT_TOKEN --data-file - --force --project vnhatro
-          npx firebase-tools deploy --only functions --project vnhatro --force
+          # Project mới: Google giới hạn số hàm tạo cùng lúc và quyền build cần vài phút mới có hiệu lực → lỗi thì đợi rồi thử lại một lần.
+          npx firebase-tools deploy --only functions --project vnhatro --force || { echo "Deploy functions lỗi, thử lại sau 90 giây"; sleep 90; npx firebase-tools deploy --only functions --project vnhatro --force; }
