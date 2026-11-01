@@ -9,6 +9,9 @@ Hệ thống quản lý nhà trọ: web quản trị + trang phòng trống côn
 React 19 + Vite + TypeScript + Firebase (Auth, Firestore, Storage, Hosting, Cloud Functions gen2 Node 22, Scheduler, FCM).
 **Rules-as-backend:** `firestore.rules` / `storage.rules` là lớp phân quyền thật; giao diện chỉ ẩn nút cho tiện. Việc cần tin cậy hoặc chạy định kỳ (bot, webhook ngân hàng, phát hành hóa đơn, nhắc việc, sao lưu) thì đặt ở Cloud Functions.
 
+## Lệnh
+`npm test` (thư viện + luật + functions, cần JDK 21) · `npm run test:e2e` · `npm run build` · triển khai: `docs/trien-khai.md`.
+
 ## Quy tắc
 - Không đưa bí mật (token, mật khẩu, khóa API) vào mã hoặc chat. Dùng Firebase Secret Manager / GitHub Secrets.
 - Mọi thay đổi luật hoặc hàm phải kèm test, cả trường hợp "được" lẫn "bị chặn". `npm test` phải xanh trước khi commit.
@@ -18,5 +21,7 @@ React 19 + Vite + TypeScript + Firebase (Auth, Firestore, Storage, Hosting, Clou
 - Mô-đun Cloud Functions viết dạng factory nhận phụ thuộc (`createX({db, tg, ...})`) để dễ test.
 - Ngày theo giờ Việt Nam, lưu `YYYY-MM-DD`; kỳ hóa đơn `YYYY-MM`; tiền là số nguyên VNĐ. Không dùng `toISOString().slice(0,10)`.
 - Thông báo / việc chạy định kỳ phải idempotent (khóa `tgSent/...`).
-- Chuỗi giao diện đặt trong `i18n/` (tiếng Việt bắt buộc, tiếng Anh khi có).
+- Nhãn dùng chung (trạng thái, vai trò, loại phòng…) đặt trong `src/i18n/index.tsx`; giao diện tiếng Việt (tiếng Anh thêm sau).
+- Dữ liệu theo khu đọc bằng `useScoped()` (`src/lib/scoped.tsx`): người không phải chủ chỉ được truy vấn `where("propertyId","==",khu)`.
+- Thay đổi giao diện quan trọng: chạy `npm run test:e2e` (Playwright + emulator).
 - Báo cáo sau mỗi việc: đã làm gì, đã kiểm tra gì, còn giới hạn gì.

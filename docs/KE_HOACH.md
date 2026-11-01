@@ -229,7 +229,18 @@ Kết luận vẫn giữ: không fork các dự án này. Nền tảng chính l�
 
 ---
 
-## 12. Việc cần làm ngay
+## 12. Tiến độ (01/11/2026)
+
+Đã làm xong (gộp giai đoạn 0–7 và 9, ở mức bản đầu):
+- Khung dự án kế thừa Nhà Gỗ, cấu hình project `vnhatro` / trang `nhatroviet`, CI/CD (test → deploy).
+- Luật Firestore/Storage theo khu + 112 kiểm tra; `billing.ts` ↔ `billing.js` + test so khớp; báo cáo, CCCD.
+- Cloud Functions: bot Telegram nhà trọ, phát hành hóa đơn (server tính lại, khóa chỉ số), mã mời người thuê, webhook ngân hàng `NHATRO <mã>`, nhắc việc 08:00, báo cáo 21:00, sao lưu 02:00 — 18 test.
+- Web: tổng quan, khu & dịch vụ, phòng (ảnh, công khai), người cư trú (quét QR CCCD, ảnh giấy tờ, tạm trú), hợp đồng (thanh lý trừ cọc, in mẫu), điện nước, hóa đơn & thu tiền, thu chi & báo cáo, báo hỏng, đối soát ngân hàng, phân quyền, nhật ký, cài đặt; trang phòng trống công khai; cổng người thuê; hóa đơn in/PDF có VietQR; PWA.
+- Test trình duyệt toàn luồng (`tests/e2e.mjs`, 15 kiểm tra).
+
+Còn lại: đóng gói Capacitor lên store, OCR đồng hồ, Zalo, ký hợp đồng điện tử, tiếng Anh, mẫu hóa đơn/hợp đồng theo ý chủ nhà.
+
+## 13. Việc cần làm ngay
 
 1. **Gắn repo `tuivodich/Home` vào phiên làm việc** để AI đọc và sao chép các mô-đun dùng lại (§3).
 2. Chủ dự án cung cấp: số khu/số phòng, mẫu hóa đơn + hợp đồng đang dùng, cách tính điện nước (giá/kWh, nước theo khối hay theo người), ngày chốt và hạn thu tiền, ngân hàng nhận tiền.

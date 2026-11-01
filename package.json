@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test:lib": "node --experimental-strip-types --test scripts/*.test.mts",
     "test:emu": "firebase emulators:exec --only firestore --project demo-test \"npm ci --prefix tests && npm ci --prefix functions && node tests/rules.test.mjs && npm test --prefix functions\"",
-    "test": "npm run test:lib && npm run test:emu"
+    "test": "npm run test:lib && npm run test:emu",
+    "test:e2e": "firebase emulators:exec --only auth,firestore --project demo-test \"node tests/e2e.mjs\""
   },
   "dependencies": {
     "firebase": "^13.1.0",

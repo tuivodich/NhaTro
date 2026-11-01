@@ -58,14 +58,14 @@ export interface Contract {
 }
 
 /** Chỉ số chốt đầu kỳ `period` của một hợp đồng (id: `${contractId}_${period}_${serviceId}`). */
-export interface MeterReading { id: string; propertyId: string; roomId: string; contractId: string; period: string; serviceId: string; value: number; photo?: string; readBy?: string; readOn?: string }
+export interface MeterReading { id: string; propertyId: string; roomId: string; contractId: string; period: string; serviceId: string; value: number; photo?: string; readBy?: string; readOn?: string; /** Đã khóa khi hóa đơn phát hành (chỉ quản lý sửa). */ locked?: boolean }
 
 export type LineKind = "rent" | "service" | "extra" | "discount" | "round";
 export interface InvoiceLine { kind: LineKind; label: string; qty: number; unit?: string; price: number; amount: number; /** Mẫu số khi tính theo ngày (thành tiền = qty × price / den). */ den?: number; serviceId?: string; old?: number; new?: number; tiers?: Tier[] }
 export interface PayEntry { amount: number; date: string; method: "cash" | "bank" | "other"; by: string; note?: string; at?: { toMillis(): number } }
 export type InvoiceStatus = "nhap" | "da_gui" | "huy";
 export interface Invoice {
-  id: string; code: string; propertyId: string; roomId: string; roomCode: string; contractId: string; period: string;
+  id: string; code: string; propertyId: string; propertyName?: string; roomId: string; roomCode: string; contractId: string; period: string;
   tenantUids: string[]; tenantName: string; lines: InvoiceLine[]; total: number; paid: number; payLog: PayEntry[];
   status: InvoiceStatus; dueDate: string; issuedOn?: string; note?: string; createdBy?: string;
 }

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /tai-khoan
+Disallow: /hoa-don
