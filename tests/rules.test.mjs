@@ -181,6 +181,29 @@ await check("tenant đọc phiếu mình gửi", getDoc(doc(t1, "tickets/k1")), 
 await check("tenant KHÔNG tự đóng phiếu", updateDoc(doc(t1, "tickets/k1"), { status: "xong" }), false);
 await check("staff xử lý phiếu", updateDoc(doc(st, "tickets/k1"), { status: "xong" }), true);
 
+// ===== Đăng ký thuê / hẹn xem phòng =====
+const rq = (o = {}) => ({ roomId: "rA2", propertyId: "A", roomCode: "P2", propertyName: "Khu A", name: "Bình", phone: "0909 123 456", people: 2, moveIn: "2026-12-01", note: "Xem phòng tối", status: "moi", createdBy: "ten2", createdAt: serverTimestamp(), ...o });
+await check("anon KHÔNG gửi đăng ký thuê", setDoc(doc(anon, "rentalRequests/x_rA2"), rq({ createdBy: "x" })), false);
+await check("người đăng nhập gửi đăng ký thuê phòng đang đăng", setDoc(doc(t2, "rentalRequests/ten2_rA2"), rq()), true);
+await check("KHÔNG gửi trùng (đã có yêu cầu cho phòng này)", setDoc(doc(t2, "rentalRequests/ten2_rA2"), rq({ note: "lần 2" })), false);
+await check("KHÔNG gửi với id sai người", setDoc(doc(t1, "rentalRequests/ten2_rA2b"), rq({ createdBy: "ten1" })), false);
+await check("KHÔNG gửi cho phòng không đăng công khai", setDoc(doc(t1, "rentalRequests/ten1_rA1"), rq({ roomId: "rA1", createdBy: "ten1" })), false);
+await check("KHÔNG gửi sai khu so với phòng", setDoc(doc(t1, "rentalRequests/ten1_rA2"), rq({ propertyId: "B", createdBy: "ten1" })), false);
+await check("KHÔNG gửi SĐT không hợp lệ", setDoc(doc(t1, "rentalRequests/ten1_rA2"), rq({ phone: "abc", createdBy: "ten1" })), false);
+await check("KHÔNG gửi trạng thái giữ chỗ sẵn", setDoc(doc(t1, "rentalRequests/ten1_rA2"), rq({ status: "giu_cho", createdBy: "ten1" })), false);
+await check("KHÔNG gửi kèm trường lạ", setDoc(doc(t1, "rentalRequests/ten1_rA2"), rq({ createdBy: "ten1", idNumber: "1" })), false);
+await check("người gửi đọc yêu cầu của mình", getDoc(doc(t2, "rentalRequests/ten2_rA2")), true);
+await check("người khác KHÔNG đọc yêu cầu", getDoc(doc(t1, "rentalRequests/ten2_rA2")), false);
+await check("staff khu A đọc yêu cầu khu A", getDocs(query(collection(st, "rentalRequests"), where("propertyId", "==", "A"))), true);
+await check("người gửi KHÔNG tự đổi sang giữ chỗ", updateDoc(doc(t2, "rentalRequests/ten2_rA2"), { status: "giu_cho" }), false);
+await check("staff đánh dấu đã liên hệ", updateDoc(doc(st, "rentalRequests/ten2_rA2"), { status: "da_lien_he", staffNote: "hẹn 18h", handledBy: "s@x" }), true);
+await check("staff KHÔNG sửa SĐT người gửi", updateDoc(doc(st, "rentalRequests/ten2_rA2"), { phone: "0000000000" }), false);
+await check("người gửi hủy yêu cầu", updateDoc(doc(t2, "rentalRequests/ten2_rA2"), { status: "huy" }), true);
+await check("người gửi gửi lại sau khi hủy", setDoc(doc(t2, "rentalRequests/ten2_rA2"), rq({ note: "gửi lại" })), true);
+await check("manager từ chối", updateDoc(doc(man, "rentalRequests/ten2_rA2"), { status: "tu_choi" }), true);
+await check("người gửi KHÔNG gửi lại khi đã bị từ chối", setDoc(doc(t2, "rentalRequests/ten2_rA2"), rq({ note: "x" })), false);
+await check("manager khu A KHÔNG đọc yêu cầu khu B (truy vấn)", getDocs(query(collection(man, "rentalRequests"), where("propertyId", "==", "B"))), false);
+
 // ===== Nhật ký, ngân hàng, Telegram =====
 await check("staff ghi nhật ký của mình", addDoc(collection(st, "auditLog"), { by: "stA", at: serverTimestamp(), action: "x", summary: "y" }), true);
 await check("staff KHÔNG ghi nhật ký giả người khác", addDoc(collection(st, "auditLog"), { by: "own", at: serverTimestamp(), action: "x", summary: "y" }), false);

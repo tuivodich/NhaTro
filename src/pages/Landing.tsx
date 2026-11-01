@@ -64,6 +64,7 @@ export default function Landing() {
                 <b>{l.name || l.code}</b>
                 <small>{L.roomType[l.type]} · {l.address}</small>
                 <div><Money v={l.rent} />/tháng{l.area ? ` · ${l.area} m²` : ""}</div>
+                <span className="btnlink primary small">Xem &amp; đăng ký thuê</span>
               </Link>
             ))}
           </div>

@@ -1,6 +1,7 @@
 "use strict";
 const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { defineSecret } = require("firebase-functions/params");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
@@ -84,6 +85,13 @@ exports.bankHook = onRequest(opts, async (req, res) => {
     const r = await createBankHook({ db: getFirestore(), bot: botFor() }).handle(req.body, { authorization: req.get("authorization"), "secure-token": req.get("secure-token") });
     res.status(r.status).json(r.json);
   } catch (e) { console.error("bankHook", e); res.status(500).json({ success: false, error: 1 }); }
+});
+
+/** Có đăng ký thuê mới (hoặc gửi lại sau khi hủy) → báo Telegram cho người phụ trách khu. */
+exports.rentalRequestNotify = onDocumentWritten({ ...opts, document: "rentalRequests/{id}" }, async (event) => {
+  const before = event.data?.before?.data(), after = event.data?.after?.data();
+  if (!after || after.status !== "moi" || before?.status === "moi") return;
+  try { await botFor().notifyRequest(event.params.id); } catch (e) { console.error("rentalRequestNotify", e); }
 });
 
 /** 08:00 hằng ngày: nhắc hạn thanh toán, hợp đồng sắp hết hạn, chỉ số chưa ghi, tạm trú. */

@@ -6,6 +6,7 @@ import { useI18n } from "../i18n";
 import type { Listing } from "../lib/types";
 import Money from "../components/Money";
 import { ContactBox, PublicHeader } from "./Landing";
+import RequestForm from "../components/RequestForm";
 
 export default function ListingPage() {
   const { id = "" } = useParams();
@@ -33,6 +34,7 @@ export default function ListingPage() {
             {l.desc && <p className="pre">{l.desc}</p>}
             <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.address)}`} target="_blank" rel="noreferrer">📍 Xem bản đồ</a>
           </div>
+          <RequestForm listing={l} />
           <ContactBox />
         </>}
       </main>
