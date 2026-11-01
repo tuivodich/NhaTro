@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { deleteDoc, doc, setDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
@@ -72,10 +73,12 @@ export default function RoomsPage() {
   const groups = props.filter((p) => inScope(p.id)).map((p) => ({ p, rs: rooms.filter((r) => r.propertyId === p.id).sort((a, b) => a.code.localeCompare(b.code, "vi", { numeric: true })) }));
   return (
     <>
-      <div className="row between"><h2>Phòng</h2>{admin && <button onClick={() => setEdit(blank())}>+ Thêm phòng</button>}</div>
+      <div className="row between"><h2>Phòng</h2><div className="row">{profile?.role === "owner" && <Link className="btnlink" to="/app/khu?moi=1">+ Thêm khu nhà trọ</Link>}{admin && props.length > 0 && <button onClick={() => setEdit(blank())}>+ Thêm phòng</button>}</div></div>
+      {!props.length && <p>Chưa có khu nào.{profile?.role === "owner" && <> <Link to="/app/khu?moi=1">Thêm khu nhà trọ đầu tiên</Link>.</>}</p>}
       {groups.map(({ p, rs }) => (
         <section key={p.id}>
-          <h3>{p.name}</h3>
+          <div className="row between"><h3>{p.name} <small>· {rs.length} phòng/căn</small></h3>{admin && <button className="ghost" onClick={() => setEdit({ ...blank(), propertyId: p.id })}>+ Thêm phòng vào khu này</button>}</div>
+          {!rs.length && <p><small>Khu này chưa có phòng nào.</small></p>}
           <div className="grid">
             {rs.map((r) => {
               const c = contracts.find((x) => x.roomId === r.id);

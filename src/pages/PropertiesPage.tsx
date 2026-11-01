@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { addDoc, collection, deleteDoc, doc, setDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useProps, useScoped } from "../lib/scoped";
@@ -41,6 +42,9 @@ export default function PropertiesPage() {
   const audit = useAudit();
   const [edit, setEdit] = useState<(Omit<Property, "id"> & { id?: string }) | null>(null);
   const [err, setErr] = useState("");
+  const { setCurrent } = useProps();
+  const [sp, setSp] = useSearchParams();
+  useEffect(() => { if (sp.get("moi") === "1") { setEdit({ ...EMPTY }); setSp({}, { replace: true }); } }, [sp, setSp]);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +52,7 @@ export default function PropertiesPage() {
     setErr("");
     const { id, ...data } = edit;
     try {
-      if (id) await setDoc(doc(db, "properties", id), data); else await addDoc(collection(db, "properties"), { ...data, order: props.length + 1 });
+      if (id) await setDoc(doc(db, "properties", id), data); else await addDoc(collection(db, "properties"), { ...data, order: Math.max(0, ...props.map((x) => x.order ?? 0)) + 1 });
       audit("property.save", `Lưu khu ${data.name}`, { type: "property", id: id ?? "" });
       setEdit(null);
     } catch (x) { setErr((x as Error).message); }
@@ -61,14 +65,15 @@ export default function PropertiesPage() {
 
   return (
     <>
-      <div className="row between"><h2>Khu trọ &amp; dịch vụ</h2><button onClick={() => setEdit({ ...EMPTY })}>+ Thêm khu</button></div>
+      <div className="row between"><h2>Khu nhà trọ ({props.length})</h2><button onClick={() => setEdit({ ...EMPTY })}>+ Thêm khu nhà trọ</button></div>
+      <p><small>Mỗi khu có địa chỉ, ngày chốt tiền và bảng giá dịch vụ riêng. Thêm khu xong, vào <b>Phòng</b> để thêm phòng/căn cho khu đó. Quản lý/nhân viên chỉ thấy các khu được giao ở “Tài khoản &amp; phân quyền”.</small></p>
       {props.map((p) => (
         <div key={p.id} className="card">
           <div className="row between"><h3>{p.name}</h3><span className="tag">{L.propertyKind[p.kind]}</span></div>
           <small>{p.address}</small>
           <div>Chốt chỉ số &amp; lập hóa đơn ngày <b>{p.billingDay}</b> hằng tháng · hạn trả sau <b>{p.dueDays}</b> ngày · {rooms.filter((r) => r.propertyId === p.id).length} phòng/căn</div>
           <div className="row">{p.services.length ? p.services.map((s) => <span key={s.id} className="tag">{s.name}: <Money v={s.price} />/{s.unit} ({L.serviceMode[s.mode]})</span>) : <small>Không có dịch vụ thu thêm (người thuê tự trả điện nước).</small>}</div>
-          <div className="row"><button className="ghost" onClick={() => setEdit({ ...p })}>Sửa</button><button className="ghost danger" onClick={() => remove(p)}>Xóa</button></div>
+          <div className="row"><button className="ghost" onClick={() => setEdit({ ...p })}>Sửa</button><Link className="btnlink" to="/app/phong" onClick={() => setCurrent(p.id)}>Xem / thêm phòng</Link><button className="ghost danger" onClick={() => remove(p)}>Xóa</button></div>
         </div>
       ))}
       {edit && (

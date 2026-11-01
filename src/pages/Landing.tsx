@@ -52,7 +52,7 @@ export default function Landing() {
       <PublicHeader />
       <section className="hero">
         <h1>Phòng trọ &amp; nhà cho thuê</h1>
-        <p>Cộng Hòa (Tân Sơn Nhất) · Hiệp Thành (Tân Thới Hiệp) · Quốc Lộ 1 (An Phú Đông) — TP. Hồ Chí Minh</p>
+        <p>{[...new Set(list.map((l) => l.propertyName))].join(" · ") || "TP. Hồ Chí Minh"}</p>
       </section>
       <main className="pub-main">
         <h2>Đang cho thuê</h2>

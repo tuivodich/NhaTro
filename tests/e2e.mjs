@@ -76,14 +76,57 @@ try {
   await field(own, "Số điện thoại").fill("0901234567");
   await own.getByLabel(/đồng ý cho lưu thông tin/).check();
   await own.getByRole("button", { name: "Lưu" }).click();
-  await own.getByText("Lưu hồ sơ trước").waitFor({ state: "detached" });
-  await own.locator("form").getByRole("button", { name: "Đóng", exact: true }).last().click();
+  await own.locator(".modal").waitFor({ state: "detached" });
   await own.locator("tr", { hasText: "Nguyễn Văn An" }).waitFor();
   await own.locator("tr", { hasText: "Nguyễn Văn An" }).getByRole("button", { name: "Tạo mã mời" }).click();
   const invite = (await own.locator("tr", { hasText: "Nguyễn Văn An" }).locator("code").textContent()).trim();
   ok("tạo mã mời", /^[A-Z0-9]{6}$/.test(invite));
 
-  // 5) Hợp đồng P1 bắt đầu 01/10/2026 với chỉ số điện đầu 1000
+  // 4b) Hộ chiếu (người nước ngoài) và CMND cũ; số sai bị báo lỗi
+  await own.getByRole("button", { name: "+ Thêm người" }).click();
+  await field(own, "Khu").selectOption("conghoa");
+  await field(own, "Họ và tên").fill("Kim Min Ji");
+  await field(own, "Số điện thoại").fill("0909000111");
+  await own.getByLabel("Hộ chiếu", { exact: true }).check();
+  ok("hộ chiếu: ẩn nút quét QR CCCD, hiện ô quốc tịch", !(await own.getByRole("button", { name: /Quét QR/ }).count()) && (await field(own, "Quốc tịch").count()) === 1);
+  ok("hộ chiếu: có ô ảnh trang thông tin + nút chọn ảnh", (await own.getByText("Trang thông tin hộ chiếu").count()) === 1 && (await own.getByText("🖼 Chọn ảnh").count()) === 3);
+  await field(own, "Số hộ chiếu").fill("AB1");
+  await field(own, "Quốc tịch").fill("Hàn Quốc");
+  await own.getByLabel(/đồng ý cho lưu thông tin/).check();
+  await own.locator(".modal").getByRole("button", { name: "Lưu", exact: true }).click();
+  ok("số hộ chiếu sai bị báo lỗi", await own.getByText(/Số hộ chiếu gồm 6–12/).waitFor({ timeout: 5000 }).then(() => true, () => false));
+  await field(own, "Số hộ chiếu").fill("m1234567");
+  await own.locator(".modal").getByRole("button", { name: "Lưu", exact: true }).click();
+  await own.locator(".modal").waitFor({ state: "detached" });
+  ok("lưu hồ sơ hộ chiếu", (await own.locator("tr", { hasText: "Kim Min Ji" }).textContent()).includes("Hộ chiếu ••••4567"));
+  await own.getByRole("button", { name: "+ Thêm người" }).click();
+  await field(own, "Khu").selectOption("conghoa");
+  await field(own, "Họ và tên").fill("Trần Văn Dũng");
+  await field(own, "Số điện thoại").fill("0909000222");
+  await own.getByLabel("Chứng minh nhân dân (CMND cũ)").check();
+  await field(own, "Số CMND").fill("123456789");
+  await own.getByLabel(/đồng ý cho lưu thông tin/).check();
+  await own.locator(".modal").getByRole("button", { name: "Lưu", exact: true }).click();
+  await own.locator(".modal").waitFor({ state: "detached" });
+  ok("lưu hồ sơ CMND cũ", (await own.locator("tr", { hasText: "Trần Văn Dũng" }).textContent()).includes("CMND ••••6789"));
+
+  // 4c) Thêm khu nhà trọ thứ 4 từ menu chính + thêm phòng vào khu đó
+  await own.getByRole("link", { name: "Khu nhà trọ" }).click();
+  await own.getByRole("button", { name: "+ Thêm khu nhà trọ" }).click();
+  await field(own, "Tên khu").fill("Khu trọ Gò Vấp");
+  await field(own, "Địa chỉ").fill("12 Quang Trung, Gò Vấp, TP.HCM");
+  await saveModal(own);
+  await own.getByRole("heading", { name: "Khu nhà trọ (4)" }).waitFor();
+  ok("tạo khu thứ 4", true);
+  await own.locator(".card", { hasText: "Khu trọ Gò Vấp" }).getByRole("link", { name: "Xem / thêm phòng" }).click();
+  await own.getByRole("button", { name: "+ Thêm phòng vào khu này" }).first().click();
+  await field(own, "Mã phòng").fill("GV1");
+  await field(own, "Giá thuê/tháng").fill("2500000");
+  await saveModal(own);
+  ok("thêm phòng vào khu mới", (await own.locator(".card.room", { hasText: "GV1" }).count()) === 1);
+  await own.getByLabel("Chọn khu").selectOption(""); // trở lại "Tất cả khu"
+
+
   await own.goto(BASE + "/app/hop-dong");
   await own.getByRole("button", { name: "+ Hợp đồng mới" }).click();
   await field(own, "Khu").selectOption("conghoa");

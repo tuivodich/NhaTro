@@ -13,6 +13,8 @@ export const vi = {
   tamTru: { chua: "Chưa đăng ký", da_dang_ky: "Đã đăng ký", het_han: "Hết hạn" },
   payMethod: { cash: "Tiền mặt", bank: "Chuyển khoản", other: "Khác" },
   gender: { nam: "Nam", nu: "Nữ", "": "—" },
+  docType: { cccd: "Căn cước công dân (CCCD)", cmnd: "Chứng minh nhân dân (CMND cũ)", passport: "Hộ chiếu" },
+  docTypeShort: { cccd: "CCCD", cmnd: "CMND", passport: "Hộ chiếu" },
 };
 export type Dict = typeof vi;
 

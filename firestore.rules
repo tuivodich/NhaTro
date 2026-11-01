@@ -79,9 +79,10 @@ service cloud.firestore {
     // Hồ sơ người cư trú (CCCD…): chỉ chủ/quản lý của khu; người thuê đọc hồ sơ của chính mình. Trường uid chỉ Cloud Function (mã mời) gắn.
     match /tenants/{id} {
       allow read: if manages(resource.data.propertyId) || (signedIn() && resource.data.get('uid', '') == request.auth.uid);
-      allow create: if manages(request.resource.data.propertyId) && !('uid' in request.resource.data) && request.resource.data.fullName is string;
+      function validDocType() { return request.resource.data.get('docType', 'cccd') in ['cccd', 'cmnd', 'passport']; }
+      allow create: if manages(request.resource.data.propertyId) && !('uid' in request.resource.data) && request.resource.data.fullName is string && validDocType();
       allow update: if manages(resource.data.propertyId) && manages(request.resource.data.propertyId)
-        && request.resource.data.get('uid', '') == resource.data.get('uid', '');
+        && request.resource.data.get('uid', '') == resource.data.get('uid', '') && validDocType();
       allow delete: if manages(resource.data.propertyId);
     }
 
