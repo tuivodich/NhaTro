@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import { collection, doc, getDoc, writeBatch } from "firebase/firestore";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { collection, deleteDoc, deleteField, doc, getDoc, updateDoc, writeBatch } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
 import { useProps, useScoped } from "../lib/scoped";
@@ -8,7 +9,7 @@ import { useAudit } from "../lib/audit";
 import { syncListing } from "../lib/listings";
 import { buildInvoice } from "../lib/billing";
 import { addDays, addMonths, fmtDate, randomCode, todayStr } from "../lib/format";
-import { isAdminRole, type Contract, type Invoice, type MeterReading, type Room, type Service, type Tenant } from "../lib/types";
+import { isAdminRole, type Contract, type Invoice, type MeterReading, type RentalRequest, type Room, type Service, type Tenant } from "../lib/types";
 import DateInput from "../components/DateInput";
 import NumInput from "../components/NumInput";
 import Modal from "../components/Modal";
@@ -16,7 +17,7 @@ import Money from "../components/Money";
 import PropSelect from "../components/PropSelect";
 import { ServicesEditor } from "./PropertiesPage";
 
-interface NewC { propertyId: string; roomId: string; mainTenantId: string; others: string[]; start: string; months: number; rent: number; deposit: number; services: Service[]; meters: Record<string, number | ""> ; note: string }
+interface NewC { propertyId: string; roomId: string; mainTenantId: string; others: string[]; start: string; months: number; rent: number; deposit: number; services: Service[]; meters: Record<string, number | ""> ; note: string; requestId?: string }
 
 export default function ContractsPage() {
   const { profile } = useAuth();
@@ -25,15 +26,31 @@ export default function ContractsPage() {
   const audit = useAudit();
   const { current, inScope, byId, props } = useProps();
   const rooms = useScoped<Room>("rooms").data;
-  const contracts = useScoped<Contract>("contracts").data.filter((c) => inScope(c.propertyId));
+  const allContracts = useScoped<Contract>("contracts").data;
+  const contracts = allContracts.filter((c) => inScope(c.propertyId));
   const tenants = useScoped<Tenant>("tenants", admin).data;
   const readings = useScoped<MeterReading>("meterReadings").data;
+  const requests = useScoped<RentalRequest>("rentalRequests").data;
+  const [sp, setSp] = useSearchParams();
   const [tab, setTab] = useState<"hieu_luc" | "cu">("hieu_luc");
   const [nc, setNc] = useState<NewC | null>(null);
   const [view, setView] = useState<Contract | null>(null);
   const [settle, setSettle] = useState<{ c: Contract; date: string; meters: Record<string, number | "">; extra: number; note: string } | null>(null);
   const [err, setErr] = useState("");
   const today = todayStr();
+
+  /** Mở từ trang Đăng ký thuê (?tuYeuCau=…&nguoiThue=…): form hợp đồng điền sẵn; ?xem=… mở chi tiết hợp đồng. */
+  useEffect(() => {
+    const rid = sp.get("tuYeuCau"), tid = sp.get("nguoiThue"), xem = sp.get("xem");
+    if (xem) { const c = allContracts.find((x) => x.id === xem); if (c) { setView(c); setSp({}, { replace: true }); } return; }
+    if (!rid || !tid || nc) return;
+    const r = requests.find((x) => x.id === rid), room = rooms.find((x) => x.id === r?.roomId), t = tenants.find((x) => x.id === tid);
+    if (!r || !room || !t) return; // đợi dữ liệu tải xong
+    const prop = byId[r.propertyId];
+    setErr("");
+    setNc({ propertyId: r.propertyId, roomId: room.id, mainTenantId: t.id, others: [], start: r.moveIn && r.moveIn >= todayStr() ? r.moveIn : todayStr(), months: 12, rent: room.rent, deposit: room.rent, services: prop?.services ?? [], meters: {}, note: r.note ? `Ghi chú khi đăng ký: ${r.note}` : "", requestId: r.id });
+    setSp({}, { replace: true });
+  }, [sp, requests, rooms, tenants, allContracts, byId, nc]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const startNew = () => {
     const pid = current || props[0]?.id || "";
@@ -69,6 +86,7 @@ export default function ContractsPage() {
     try {
       await b.commit();
       await syncListing({ ...room, status: "dang_thue" }, byId[room.propertyId]);
+      if (nc.requestId) await updateDoc(doc(db, "rentalRequests", nc.requestId), { status: "da_thue", contractId: ref.id, handledBy: profile?.name || profile?.email || "", handledOn: todayStr() }).catch((x) => console.error("request", x));
       audit("contract.create", `Hợp đồng ${c.code}: ${room.code} — ${main.fullName}`, { type: "contract", id: ref.id });
       setNc(null);
     } catch (x) { setErr((x as Error).message); }
@@ -88,6 +106,23 @@ export default function ContractsPage() {
   };
   const leave = (c: Contract, tid: string) => update(c, { occupants: c.occupants.map((o) => (o.tenantId === tid && !o.to ? { ...o, to: today } : o)) }, "người ở chuyển đi");
   const extend = (c: Contract, months: number) => update(c, { end: addDays(`${addMonths(c.end.slice(0, 7), months)}${c.end.slice(7)}`, 0) }, `gia hạn ${months} tháng`);
+
+  /** Chủ khôi phục hợp đồng đã thanh lý nhầm: hiệu lực lại, phòng đang thuê, xóa hóa đơn thanh lý nếu còn nháp, yêu cầu thuê về "Đã ký". */
+  const restore = async (c: Contract) => {
+    if (allContracts.some((x) => x.roomId === c.roomId && x.status === "hieu_luc" && x.id !== c.id)) return alert(`Phòng ${c.roomCode} đã có hợp đồng khác đang hiệu lực.`);
+    const inv = c.settlement?.finalInvoiceId ? (await getDoc(doc(db, "invoices", c.settlement.finalInvoiceId))).data() as Invoice | undefined : undefined;
+    if (!confirm(`Khôi phục hợp đồng ${c.code} (phòng ${c.roomCode}) về “Hiệu lực”?${inv && inv.status !== "nhap" ? "\n⚠️ Hóa đơn thanh lý đã phát hành — hãy hủy nó ở trang Hóa đơn." : ""}`)) return;
+    const b = writeBatch(db);
+    b.update(doc(db, "contracts", c.id), { status: "hieu_luc", endedOn: deleteField(), settlement: deleteField(), occupants: c.occupants.map((o) => (o.to && o.to === c.endedOn ? { tenantId: o.tenantId, name: o.name, from: o.from } : o)) });
+    b.update(doc(db, "rooms", c.roomId), { status: "dang_thue" });
+    await b.commit();
+    if (inv && inv.status === "nhap") await deleteDoc(doc(db, "invoices", c.settlement!.finalInvoiceId!)).catch(() => {});
+    const room = (await getDoc(doc(db, "rooms", c.roomId))).data() as Room | undefined;
+    if (room) await syncListing({ ...room, id: c.roomId }, byId[c.propertyId]);
+    for (const r of requests.filter((x) => x.contractId === c.id && x.status === "ket_thuc")) await updateDoc(doc(db, "rentalRequests", r.id), { status: "da_thue" }).catch(() => {});
+    audit("contract.restore", `Khôi phục hợp đồng ${c.code} ${c.roomCode}`, { type: "contract", id: c.id });
+    setView(null);
+  };
 
   /** Thanh lý: chốt chỉ số cuối, lập hóa đơn cuối (nháp) có trừ tiền cọc, trả phòng. */
   const doSettle = async (e: React.FormEvent) => {
@@ -116,6 +151,7 @@ export default function ContractsPage() {
     await b.commit();
     const room = (await getDoc(doc(db, "rooms", c.roomId))).data() as Room | undefined;
     if (room) await syncListing({ ...room, id: c.roomId }, byId[c.propertyId]);
+    for (const r of requests.filter((x) => x.contractId === c.id && x.status === "da_thue")) await updateDoc(doc(db, "rentalRequests", r.id), { status: "ket_thuc", handledOn: date }).catch(() => {});
     audit("contract.settle", `Thanh lý ${c.code} ${c.roomCode}: trừ cọc ${depositUsed}, hoàn ${refund}`, { type: "contract", id: c.id });
     setSettle(null); setView(null);
     alert("Đã thanh lý. Hóa đơn cuối ở dạng nháp — vào Hóa đơn để kiểm tra và phát hành.");
@@ -185,11 +221,12 @@ export default function ContractsPage() {
               <div className="row">
                 <button className="ghost" onClick={() => extend(view, 6)}>Gia hạn 6 tháng</button>
                 <button className="ghost" onClick={() => extend(view, 12)}>Gia hạn 12 tháng</button>
-                <button className="danger ghost" onClick={() => setSettle({ c: view, date: today, meters: {}, extra: 0, note: "" })}>Thanh lý / trả phòng</button>
+                <button className="danger ghost" onClick={() => setSettle({ c: view, date: today, meters: {}, extra: 0, note: "" })}>Kết thúc thuê / thanh lý (trả phòng)</button>
                 <button className="ghost" onClick={() => printContract(view, byId[view.propertyId]?.name ?? "", byId[view.propertyId]?.address ?? "")}>🖨 In hợp đồng</button>
               </div>
             </>}
-            {view.settlement && <div>Thanh lý: trừ cọc <Money v={view.settlement.depositUsed} />, hoàn <Money v={view.settlement.refund} /></div>}
+            {view.settlement && <div>Thanh lý ngày {fmtDate(view.endedOn)}: trừ cọc <Money v={view.settlement.depositUsed} />, hoàn <Money v={view.settlement.refund} /></div>}
+            {profile?.role === "owner" && view.status !== "hieu_luc" && <div className="row"><button className="ghost" onClick={() => restore(view)}>↩ Khôi phục hợp đồng (thanh lý nhầm)</button></div>}
           </div>
         </Modal>
       )}

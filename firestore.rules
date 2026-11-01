@@ -51,6 +51,16 @@ service cloud.firestore {
         && (id != 'audit' || (request.resource.data.keys().hasOnly(['enabled']) && request.resource.data.enabled is bool));
     }
 
+    // "Hồ sơ của tôi": CHỈ chính chủ đọc/ghi (chủ nhà nhận bản chép qua Cloud Function khi người dùng đồng ý chia sẻ).
+    // Đường dẫn ảnh phải nằm trong thư mục profiles/<uid>/ của chính mình.
+    match /profiles/{uid} {
+      function ownImg(f) { return !(f in request.resource.data) || request.resource.data[f] == '' || request.resource.data[f].matches('^profiles/' + uid + '/[^/]+$'); }
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.get('docType', 'cccd') in ['cccd', 'cmnd', 'passport']
+        && ownImg('idFront') && ownImg('idBack') && ownImg('portrait');
+    }
+
     match /properties/{pid} {
       allow read: if canProp(pid);
       allow create, delete: if isOwner();
@@ -125,12 +135,13 @@ service cloud.firestore {
     }
 
     // Đăng ký thuê / hẹn xem phòng từ trang công khai. Phải đăng nhập (chống spam); mỗi người một yêu cầu cho mỗi phòng
-    // (id = uid_roomId); chỉ cho phòng đang đăng công khai; người gửi chỉ hủy được, hoặc gửi lại sau khi đã hủy.
+    // (id = uid_roomId); chỉ cho phòng đang đăng công khai; người gửi chỉ hủy được, hoặc gửi lại sau khi đã hủy / đã kết thúc thuê.
     match /rentalRequests/{id} {
       function listing() { return get(/databases/$(database)/documents/listings/$(request.resource.data.roomId)).data; }
       function validRequest() {
         let d = request.resource.data;
-        return d.keys().hasOnly(['roomId', 'propertyId', 'roomCode', 'roomName', 'propertyName', 'name', 'phone', 'people', 'moveIn', 'viewAt', 'note', 'status', 'createdBy', 'createdAt'])
+        return d.keys().hasOnly(['roomId', 'propertyId', 'roomCode', 'roomName', 'propertyName', 'name', 'phone', 'people', 'moveIn', 'viewAt', 'note', 'shareProfile', 'status', 'createdBy', 'createdAt'])
+          && (!('shareProfile' in d) || d.shareProfile is bool)
           && d.createdBy == request.auth.uid && id == request.auth.uid + '_' + d.roomId && d.status == 'moi' && d.createdAt == request.time
           && d.name is string && d.name.size() > 0 && d.name.size() <= 100
           && d.phone is string && d.phone.matches('^[0-9+ .]{8,15}$')
@@ -141,11 +152,11 @@ service cloud.firestore {
       allow read: if canProp(resource.data.propertyId) || (signedIn() && resource.data.createdBy == request.auth.uid);
       allow create: if signedIn() && validRequest();
       allow update: if (canProp(resource.data.propertyId) && sameProp() && request.resource.data.createdBy == resource.data.createdBy
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'staffNote', 'handledBy', 'handledOn'])
-          && request.resource.data.status in ['moi', 'da_lien_he', 'giu_cho', 'da_thue', 'tu_choi', 'huy'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'staffNote', 'handledBy', 'handledOn', 'tenantId', 'contractId'])
+          && request.resource.data.status in ['moi', 'da_lien_he', 'giu_cho', 'da_thue', 'ket_thuc', 'tu_choi', 'huy'])
         || (signedIn() && resource.data.createdBy == request.auth.uid && resource.data.status in ['moi', 'da_lien_he']
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) && request.resource.data.status == 'huy')
-        || (signedIn() && resource.data.createdBy == request.auth.uid && resource.data.status == 'huy' && validRequest());
+        || (signedIn() && resource.data.createdBy == request.auth.uid && resource.data.status in ['huy', 'ket_thuc'] && validRequest());
       allow delete: if manages(resource.data.propertyId);
     }
 

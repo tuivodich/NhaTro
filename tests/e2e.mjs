@@ -200,34 +200,78 @@ try {
   // 12) Báo cáo thu chi tháng có khoản đã thu
   await own.goto(BASE + "/app/thu-chi");
   ok("báo cáo ghi nhận 1.000.000 đ đã thu", await own.locator(".card", { hasText: "Đã thu tiền nhà" }).filter({ hasText: "1.000.000" }).waitFor({ timeout: 10000 }).then(() => true, () => false));
-  // 13) Khách xem trang công khai → đăng nhập → đăng ký thuê P2 → chủ giữ chỗ → P2 rời trang chủ
+  // 13) Khách: lưu "Hồ sơ của tôi" → đăng ký thuê P2 (đồng ý chia sẻ) → chủ giữ chỗ → P2 rời trang chủ
   const guest = await newUser("khach@nhatro.vn");
   await guest.waitForURL("**/tai-khoan");
+  await guest.getByRole("link", { name: "Mở hồ sơ" }).click();
+  await field(guest, "Họ và tên").fill("Lê Văn Khách");
+  await field(guest, "Số điện thoại").fill("0912 345 678");
+  await field(guest, "Số CCCD").fill("079099888777");
+  await guest.getByRole("button", { name: "Lưu hồ sơ" }).click();
+  ok("khách lưu Hồ sơ của tôi", await guest.getByText(/Đã lưu hồ sơ/).waitFor({ timeout: 10000 }).then(() => true, () => false));
   await guest.goto(BASE + "/");
   await guest.getByText("Xem & đăng ký thuê").first().click();
   await guest.getByRole("button", { name: "📝 Đăng ký thuê phòng này" }).click();
-  await field(guest, "Họ và tên").fill("Lê Văn Khách");
-  await field(guest, "Số điện thoại").fill("0912 345 678");
+  ok("form lấy sẵn họ tên từ hồ sơ", (await field(guest, "Họ và tên").inputValue()) === "Lê Văn Khách");
+  ok("có ô đồng ý chia sẻ hồ sơ (đã tick sẵn)", await guest.getByLabel(/Cho phép chủ nhà dùng/).isChecked());
   await field(guest, "Số người ở").fill("2");
+  await field(guest, "Muốn dọn vào từ").fill("01/12/2026");
   await field(guest, "Ghi chú").fill("Đi làm ca tối");
   await guest.getByRole("button", { name: "Gửi đăng ký" }).click();
   ok("khách gửi đăng ký thuê", await guest.getByText("Yêu cầu của bạn").waitFor({ timeout: 10000 }).then(() => true, () => false));
-  ok("khách thấy trạng thái Mới", (await guest.locator(".card.request").textContent()).includes("Mới"));
   await own.getByRole("link", { name: /Đăng ký thuê/ }).click();
-  await own.getByText("Lê Văn Khách").waitFor();
-  ok("chủ thấy số đăng ký mới trên menu", (await own.locator(".navbadge").textContent()).trim() === "1");
-  await own.getByRole("button", { name: "✅ Giữ chỗ" }).click();
-  await own.locator(".card", { hasText: "Lê Văn Khách" }).getByText("Đang giữ chỗ").waitFor();
+  const card = own.locator(".card", { hasText: "Lê Văn Khách" });
+  await card.waitFor();
+  ok("chủ thấy số đăng ký mới + đồng ý chia sẻ hồ sơ", (await own.locator(".navbadge").textContent()).trim() === "1" && (await card.textContent()).includes("đồng ý chia sẻ hồ sơ"));
+  await card.getByRole("button", { name: "✅ Giữ chỗ" }).click();
+  await card.locator(".tag", { hasText: "Đang giữ chỗ" }).waitFor();
   ok("chủ giữ chỗ", true);
-  await own.getByRole("button", { name: "Tạo hồ sơ người thuê" }).click();
-  ok("tạo hồ sơ người thuê từ đăng ký", await own.getByText(/Đã tạo hồ sơ Lê Văn Khách/).waitFor({ timeout: 10000 }).then(() => true, () => false));
   const pub2 = await (await browser.newContext()).newPage();
   await pub2.goto(BASE + "/");
   await pub2.getByText(/Hiện đã hết phòng trống|Đang cho thuê/).first().waitFor();
   await pub2.waitForTimeout(1000);
   ok("phòng đang giữ chỗ không còn trên trang chủ", !(await pub2.getByText("Phòng 2").count()));
+
+  // 14) Lập hợp đồng từ yêu cầu (máy chủ chưa chạy trong test → lập hồ sơ tối thiểu) → form điền sẵn → "Đã ký hợp đồng"
+  await card.getByRole("button", { name: "📄 Lập hợp đồng" }).click();
+  await own.waitForURL("**/app/hop-dong**");
+  await own.getByRole("heading", { name: "Hợp đồng mới" }).waitFor();
+  ok("form hợp đồng điền sẵn phòng P2 + người thuê", (await field(own, "Phòng trống").locator("option:checked").textContent()).startsWith("P2") && (await field(own, "Người đứng tên").locator("option:checked").textContent()).includes("Lê Văn Khách"));
+  ok("ngày bắt đầu = ngày muốn dọn vào", (await field(own, "Ngày bắt đầu").inputValue()) === "01/12/2026");
+  await own.getByRole("button", { name: "Tạo hợp đồng" }).click();
+  await own.locator(".modal").waitFor({ state: "detached" });
+  await own.getByRole("link", { name: /Đăng ký thuê/ }).click();
+  await own.getByRole("button", { name: /Đang thuê \(1\)/ }).click();
+  ok("yêu cầu tự chuyển “Đã ký hợp đồng” + gắn hợp đồng", (await card.textContent()).includes("Đã ký hợp đồng") && (await card.textContent()).includes("Hợp đồng"));
+
+  // 15) Kết thúc thuê (thanh lý) → yêu cầu "Đã kết thúc thuê"; chủ khôi phục khi thanh lý nhầm
+  await card.getByRole("link", { name: "Kết thúc thuê / thanh lý" }).click();
+  await own.getByRole("button", { name: /Kết thúc thuê \/ thanh lý/ }).click();
+  await field(own, "Chỉ số điện cuối").fill("10");
+  await field(own, "Chỉ số nước cuối").fill("5");
+  await own.locator(".modal").getByRole("button", { name: "Thanh lý", exact: true }).click();
+  await own.locator(".modal").waitFor({ state: "detached" });
+  await own.getByRole("link", { name: /Đăng ký thuê/ }).click();
+  await own.getByRole("button", { name: "Tất cả" }).click();
+  ok("thanh lý → yêu cầu “Đã kết thúc thuê”", await card.locator(".tag", { hasText: "Đã kết thúc thuê" }).waitFor({ timeout: 10000 }).then(() => true, () => false));
+  await own.goto(BASE + "/app/hop-dong");
+  await own.getByRole("button", { name: "Đã kết thúc" }).click();
+  await own.locator("tr", { hasText: "Lê Văn Khách" }).click();
+  await own.getByRole("button", { name: /Khôi phục hợp đồng/ }).click();
+  await own.locator(".modal").waitFor({ state: "detached" });
+  await own.getByRole("button", { name: "Đang hiệu lực" }).click();
+  ok("khôi phục hợp đồng thanh lý nhầm", await own.locator("tr", { hasText: "Lê Văn Khách" }).waitFor({ timeout: 10000 }).then(() => true, () => false));
+  await own.getByRole("link", { name: /Đăng ký thuê/ }).click();
+  await own.getByRole("button", { name: "Tất cả" }).click();
+  ok("yêu cầu quay về “Đã ký hợp đồng”", await card.locator(".tag", { hasText: "Đã ký hợp đồng" }).waitFor({ timeout: 10000 }).then(() => true, () => false));
+
+  // 16) Bấm nhầm → đổi trạng thái tự do
+  await card.getByLabel("Đổi trạng thái").selectOption("da_lien_he");
+  await card.locator(".tag", { hasText: "Đã liên hệ" }).waitFor();
+  await card.getByLabel("Đổi trạng thái").selectOption("da_thue");
+  ok("đổi trạng thái qua lại", await card.locator(".tag", { hasText: "Đã ký hợp đồng" }).waitFor({ timeout: 10000 }).then(() => true, () => false));
   await guest.goto(BASE + "/tai-khoan");
-  ok("khách thấy “Đang giữ chỗ” trong tài khoản", await guest.locator(".card", { hasText: "Đăng ký thuê của tôi" }).getByText("Đang giữ chỗ").waitFor({ timeout: 10000 }).then(() => true, () => false));
+  ok("khách thấy “Đã ký hợp đồng” trong tài khoản", await guest.locator(".card", { hasText: "Đăng ký thuê của tôi" }).getByText("Đã ký hợp đồng").waitFor({ timeout: 10000 }).then(() => true, () => false));
 } catch (e) {
   fail++; console.log("FAIL (ngoại lệ)", e.message.split("\n").slice(0, 3).join(" | "));
   for (const c of browser.contexts()) for (const pg of c.pages()) await pg.screenshot({ path: `/tmp/claude-0/e2e-${Date.now()}.png`, fullPage: true }).catch(() => {});

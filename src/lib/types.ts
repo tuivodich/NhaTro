@@ -74,12 +74,18 @@ export interface Invoice {
 export interface Txn { id: string; propertyId: string; date: string; type: "thu" | "chi"; category: string; amount: number; note?: string; by?: string }
 
 /** Đăng ký thuê / hẹn xem phòng từ trang công khai (id: `${uid}_${roomId}` — mỗi người một yêu cầu cho mỗi phòng). */
-export type RequestStatus = "moi" | "da_lien_he" | "giu_cho" | "da_thue" | "tu_choi" | "huy";
+export type RequestStatus = "moi" | "da_lien_he" | "giu_cho" | "da_thue" | "ket_thuc" | "tu_choi" | "huy";
 export interface RentalRequest {
   id: string; roomId: string; propertyId: string; roomCode: string; roomName?: string; propertyName: string;
   name: string; phone: string; people: number; moveIn?: string; viewAt?: string; note?: string;
   status: RequestStatus; createdBy: string; createdAt?: { toMillis(): number }; staffNote?: string; handledBy?: string; handledOn?: string;
+  /** Người gửi đồng ý cho chủ nhà dùng "Hồ sơ của tôi" (giấy tờ, ảnh) để lập hồ sơ người thuê. */
+  shareProfile?: boolean;
+  tenantId?: string; contractId?: string;
 }
+
+/** "Hồ sơ của tôi" của người dùng (profiles/{uid}) — chỉ chính chủ đọc/ghi; chủ nhà nhận bản chép khi người dùng đồng ý chia sẻ. */
+export type Profile = Partial<Pick<Tenant, "fullName" | "phone" | "dob" | "gender" | "docType" | "idNumber" | "oldIdNumber" | "idIssueDate" | "idIssuePlace" | "docExpiry" | "nationality" | "address" | "job" | "workplace" | "vehiclePlate" | "emergencyName" | "emergencyPhone" | "idFront" | "idBack" | "portrait" | "email">>;
 
 export type TicketStatus = "moi" | "dang_xu_ly" | "xong" | "huy";
 export interface Ticket { id: string; propertyId: string; roomId: string; roomCode?: string; contractId?: string; title: string; detail?: string; photos?: string[]; status: TicketStatus; cost?: number; createdBy: string; createdName?: string; createdOn: string; doneOn?: string }

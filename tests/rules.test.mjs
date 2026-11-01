@@ -204,6 +204,27 @@ await check("manager từ chối", updateDoc(doc(man, "rentalRequests/ten2_rA2")
 await check("người gửi KHÔNG gửi lại khi đã bị từ chối", setDoc(doc(t2, "rentalRequests/ten2_rA2"), rq({ note: "x" })), false);
 await check("manager khu A KHÔNG đọc yêu cầu khu B (truy vấn)", getDocs(query(collection(man, "rentalRequests"), where("propertyId", "==", "B"))), false);
 
+// ===== Hồ sơ của tôi (profiles) & liên kết yêu cầu ↔ hồ sơ/hợp đồng =====
+const prof = (uid, o = {}) => ({ fullName: "Bình", phone: "0909", docType: "cccd", idNumber: "079099000222", idFront: `profiles/${uid}/idFront-1.jpg`, ...o });
+await check("người dùng lưu hồ sơ của mình", setDoc(doc(t2, "profiles/ten2"), prof("ten2")), true);
+await check("người dùng đọc hồ sơ của mình", getDoc(doc(t2, "profiles/ten2")), true);
+await check("người khác KHÔNG đọc hồ sơ", getDoc(doc(t1, "profiles/ten2")), false);
+await check("chủ KHÔNG đọc thẳng hồ sơ cá nhân", getDoc(doc(own, "profiles/ten2")), false);
+await check("manager KHÔNG đọc thẳng hồ sơ cá nhân", getDoc(doc(man, "profiles/ten2")), false);
+await check("KHÔNG ghi hồ sơ của người khác", setDoc(doc(t1, "profiles/ten2"), prof("ten2")), false);
+await check("KHÔNG trỏ ảnh sang thư mục người khác", setDoc(doc(t2, "profiles/ten2"), prof("ten2", { idFront: "tenants/A/tA1/idFront.jpg" })), false);
+await check("KHÔNG trỏ ảnh sang hồ sơ người khác", setDoc(doc(t2, "profiles/ten2"), prof("ten2", { idBack: "profiles/ten1/x.jpg" })), false);
+await check("hồ sơ KHÔNG nhận loại giấy tờ lạ", setDoc(doc(t2, "profiles/ten2"), prof("ten2", { docType: "abc" })), false);
+await check("gửi đăng ký kèm đồng ý chia sẻ hồ sơ", setDoc(doc(t1, "rentalRequests/ten1_rA2"), rq({ createdBy: "ten1", shareProfile: true })), true);
+await check("KHÔNG gửi shareProfile sai kiểu", setDoc(doc(t2, "rentalRequests/ten2_rA9"), rq({ roomId: "rA9", shareProfile: "yes" })), false);
+await check("manager gắn hồ sơ + hợp đồng vào yêu cầu", updateDoc(doc(man, "rentalRequests/ten1_rA2"), { tenantId: "tA1", contractId: "cA1", status: "da_thue" }), true);
+await check("manager chuyển yêu cầu sang kết thúc thuê", updateDoc(doc(man, "rentalRequests/ten1_rA2"), { status: "ket_thuc" }), true);
+await check("manager đổi lại trạng thái khi bấm nhầm", updateDoc(doc(man, "rentalRequests/ten1_rA2"), { status: "da_thue" }), true);
+await check("người gửi KHÔNG tự gắn hợp đồng", updateDoc(doc(t1, "rentalRequests/ten1_rA2"), { contractId: "x" }), false);
+await check("người gửi KHÔNG gửi lại khi đang thuê", setDoc(doc(t1, "rentalRequests/ten1_rA2"), rq({ createdBy: "ten1", note: "lại" })), false);
+await updateDoc(doc(man, "rentalRequests/ten1_rA2"), { status: "ket_thuc" });
+await check("người gửi gửi lại sau khi đã kết thúc thuê", setDoc(doc(t1, "rentalRequests/ten1_rA2"), rq({ createdBy: "ten1", note: "thuê lại" })), true);
+
 // ===== Nhật ký, ngân hàng, Telegram =====
 await check("staff ghi nhật ký của mình", addDoc(collection(st, "auditLog"), { by: "stA", at: serverTimestamp(), action: "x", summary: "y" }), true);
 await check("staff KHÔNG ghi nhật ký giả người khác", addDoc(collection(st, "auditLog"), { by: "own", at: serverTimestamp(), action: "x", summary: "y" }), false);

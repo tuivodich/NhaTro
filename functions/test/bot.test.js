@@ -36,7 +36,7 @@ const contract = {
 };
 
 async function reset() {
-  for (const c of ["users", "properties", "rooms", "contracts", "tenants", "invoices", "meterReadings", "tickets", "tgChats", "tgTenants", "tgLinks", "tgSent", "tgRate", "settings", "bankTx", "auditLog", "listings", "rentalRequests"]) {
+  for (const c of ["users", "properties", "rooms", "contracts", "tenants", "invoices", "meterReadings", "tickets", "tgChats", "tgTenants", "tgLinks", "tgSent", "tgRate", "settings", "bankTx", "auditLog", "listings", "rentalRequests", "profiles", "tenants"]) {
     const s = await db.collection(c).get();
     await Promise.all(s.docs.map((d) => d.ref.delete()));
   }
@@ -274,4 +274,33 @@ test("đăng ký thuê: báo chủ + nhân viên khu A (không báo khu B), mộ
   // Gửi lại sau khi hủy (createdAt mới) thì báo lại
   await db.doc("rentalRequests/ten1_rA2").update({ status: "moi", createdAt: Timestamp.fromMillis(2) });
   assert.equal((await bot.notifyRequest("ten1_rA2")).sent, 2);
+});
+
+const { createRequests } = require("../requests");
+test("tenantFromRequest: chỉ chủ/quản lý của khu; chép hồ sơ + ảnh khi đồng ý; gắn uid; không chép ảnh ngoài thư mục; dùng lại", async () => {
+  await reset();
+  const copies = [];
+  const bucket = { file: (p) => ({ name: p, copy: async (dest) => { if (p.includes("missing")) throw new Error("404"); copies.push([p, dest.name]); } }) };
+  const rq = createRequests({ db, bucket, now: () => NOW });
+  await db.doc("profiles/ten1").set({ fullName: "Nguyễn Bình", phone: "0909", docType: "passport", idNumber: "M1234567", nationality: "Hàn Quốc",
+    idFront: "profiles/ten1/front.jpg", idBack: "tenants/A/other/idBack.jpg", portrait: "profiles/ten1/missing.jpg" });
+  await db.doc("rentalRequests/ten1_rA2").set({ roomId: "rA2", propertyId: "A", roomCode: "P2", name: "Bình", phone: "0911", people: 1, status: "giu_cho", createdBy: "ten1", shareProfile: true });
+  await assert.rejects(rq.tenantFromRequest("stA", "ten1_rA2"), /Chỉ chủ\/quản lý/);
+  await assert.rejects(rq.tenantFromRequest("stB", "ten1_rA2"), /Chỉ chủ\/quản lý/);
+  const r = await rq.tenantFromRequest("own", "ten1_rA2");
+  assert.equal(r.fromProfile, true);
+  assert.equal(r.copiedImages, 1, "chỉ chép ảnh hợp lệ trong profiles/ten1/");
+  const t = (await db.doc(`tenants/${r.tenantId}`).get()).data();
+  assert.equal(t.fullName, "Nguyễn Bình"); assert.equal(t.docType, "passport"); assert.equal(t.nationality, "Hàn Quốc");
+  assert.equal(t.uid, "ten1"); assert.equal(t.consent, true); assert.equal(t.propertyId, "A");
+  assert.match(t.idFront, new RegExp(`^tenants/A/${r.tenantId}/idFront-`));
+  assert.equal(t.idBack, undefined, "không chép ảnh trỏ ra ngoài thư mục hồ sơ");
+  assert.deepEqual(copies.map((c) => c[0]), ["profiles/ten1/front.jpg"]);
+  assert.equal((await db.doc("rentalRequests/ten1_rA2").get()).data().tenantId, r.tenantId);
+  assert.deepEqual(await rq.tenantFromRequest("own", "ten1_rA2"), { tenantId: r.tenantId, existing: true });
+  // Không đồng ý chia sẻ → chỉ họ tên + SĐT trong yêu cầu
+  await db.doc("rentalRequests/ten1_rA9").set({ roomId: "rA9", propertyId: "B", roomCode: "N9", name: "Bình", phone: "0911", people: 1, status: "moi", createdBy: "ten1", shareProfile: false });
+  const r2 = await rq.tenantFromRequest("own", "ten1_rA9");
+  const t2 = (await db.doc(`tenants/${r2.tenantId}`).get()).data();
+  assert.equal(r2.fromProfile, false); assert.equal(t2.fullName, "Bình"); assert.equal(t2.idNumber, ""); assert.equal(t2.uid, "ten1"); assert.equal(t2.consent, false);
 });
