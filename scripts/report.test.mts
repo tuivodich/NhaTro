@@ -54,3 +54,18 @@ test("format: kỳ, ngày VN", () => {
   assert.equal(daysInMonth("2024-02"), 29);
   assert.equal(todayStr(new Date("2026-11-01T18:30:00Z")), "2026-11-02"); // 01:30 sáng giờ VN
 });
+
+import { docNumberError, docTypeOf, normDocNumber, DOC_IMAGES } from "../src/lib/idDoc.ts";
+test("giấy tờ: CCCD 12 số, CMND 9/12 số, hộ chiếu 6–12 ký tự", () => {
+  assert.equal(docNumberError("cccd", "079 099 012 345"), "");
+  assert.match(docNumberError("cccd", "123456789"), /12 chữ số/);
+  assert.equal(docNumberError("cmnd", "123456789"), "");
+  assert.equal(docNumberError("cmnd", "079099012345"), "");
+  assert.match(docNumberError("cmnd", "12345"), /9 hoặc 12/);
+  assert.equal(docNumberError("passport", "c1234567"), "");
+  assert.match(docNumberError("passport", "AB 12"), /hộ chiếu/);
+  assert.equal(docNumberError("passport", ""), "");
+  assert.equal(normDocNumber(" c-123.45 "), "C12345");
+  assert.equal(docTypeOf({}), "cccd");
+  assert.equal(DOC_IMAGES.passport[0].label, "Trang thông tin hộ chiếu");
+});

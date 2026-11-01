@@ -50,7 +50,7 @@ export default function StaffShell() {
     ...(admin ? [{ label: "Thu chi & báo cáo", to: "/app/thu-chi" }, { label: "Đối soát ngân hàng", to: "/app/ngan-hang" }] : []),
   ];
   const sysItems: DdItem[] = [
-    ...(owner ? [{ label: "Khu trọ & dịch vụ", to: "/app/khu" }, { label: "Tài khoản & phân quyền", to: "/app/tai-khoan" }] : []),
+    ...(owner ? [{ label: "Tài khoản & phân quyền", to: "/app/tai-khoan" }] : []),
     ...(admin ? [{ label: "Nhật ký hoạt động", to: "/app/nhat-ky" }] : []),
     { label: "Cài đặt", to: "/app/cai-dat" },
   ];
@@ -67,12 +67,13 @@ export default function StaffShell() {
         </header>
         <nav>
           <NavLink to="/app" end>Tổng quan</NavLink>
+          {owner && <NavLink to="/app/khu">Khu nhà trọ</NavLink>}
           <NavLink to="/app/phong">Phòng</NavLink>
           <Dropdown className="st-dd" label="Người thuê" items={peopleItems} active={isIn("/app/nguoi-thue", "/app/tam-tru", "/app/hop-dong")} />
           <NavLink to="/app/chi-so">Điện nước</NavLink>
           <Dropdown className="st-dd" label="Tài chính" items={moneyItems} active={isIn("/app/hoa-don", "/app/thu-chi", "/app/ngan-hang")} />
           <NavLink to="/app/bao-hong">Báo hỏng</NavLink>
-          <Dropdown className="st-dd" label="Hệ thống" items={sysItems} active={isIn("/app/khu", "/app/tai-khoan", "/app/nhat-ky", "/app/cai-dat")} />
+          <Dropdown className="st-dd" label="Hệ thống" items={sysItems} active={isIn("/app/tai-khoan", "/app/nhat-ky", "/app/cai-dat")} />
         </nav>
         <main>
           <Routes>

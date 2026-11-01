@@ -38,7 +38,8 @@ export interface Listing { id: string; propertyId: string; propertyName: string;
 export type TamTruStatus = "chua" | "da_dang_ky" | "het_han";
 export interface Tenant {
   id: string; propertyId: string; fullName: string; gender?: "nam" | "nu" | ""; dob?: string;
-  idNumber: string; oldIdNumber?: string; idIssueDate?: string; idIssuePlace?: string; address?: string;
+  /** Loại giấy tờ (hồ sơ cũ không có = CCCD); `idNumber` là số của giấy tờ đó. */
+  docType?: "cccd" | "cmnd" | "passport"; idNumber: string; oldIdNumber?: string; idIssueDate?: string; idIssuePlace?: string; docExpiry?: string; nationality?: string; address?: string;
   phone: string; email?: string; job?: string; workplace?: string; emergencyName?: string; emergencyPhone?: string; vehiclePlate?: string;
   idFront?: string; idBack?: string; portrait?: string;
   /** Tài khoản đăng nhập của người thuê (gắn qua mã mời). */

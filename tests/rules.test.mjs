@@ -121,6 +121,11 @@ await check("manager KHÔNG tự gắn uid cho hồ sơ", setDoc(doc(man, "tenan
 await check("manager KHÔNG đổi uid hồ sơ", updateDoc(doc(man, "tenants/tA1"), { uid: "ten2" }), false);
 await check("manager A KHÔNG chuyển hồ sơ sang khu B", updateDoc(doc(man, "tenants/tA1"), { propertyId: "B" }), false);
 await check("tenant KHÔNG sửa hồ sơ", updateDoc(doc(t1, "tenants/tA1"), { phone: "1" }), false);
+await check("manager tạo hồ sơ hộ chiếu", setDoc(doc(man, "tenants/tA5"), { propertyId: "A", fullName: "Kim", docType: "passport", idNumber: "M12345678", nationality: "Hàn Quốc", phone: "1" }), true);
+await check("manager tạo hồ sơ CMND cũ", setDoc(doc(man, "tenants/tA6"), { propertyId: "A", fullName: "Dũng", docType: "cmnd", idNumber: "123456789", phone: "1" }), true);
+await check("KHÔNG nhận loại giấy tờ lạ", setDoc(doc(man, "tenants/tA7"), { propertyId: "A", fullName: "X", docType: "bang_lai", idNumber: "1", phone: "1" }), false);
+await check("KHÔNG sửa sang loại giấy tờ lạ", updateDoc(doc(man, "tenants/tA5"), { docType: "khac" }), false);
+await check("manager đổi CMND → CCCD", updateDoc(doc(man, "tenants/tA6"), { docType: "cccd", idNumber: "079099000111" }), true);
 
 // ===== Hợp đồng =====
 await check("tenant truy vấn hợp đồng của mình", getDocs(query(collection(t1, "contracts"), where("tenantUids", "array-contains", "ten1"))), true);
