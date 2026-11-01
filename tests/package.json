@@ -1,0 +1,10 @@
+{
+  "name": "nhatro-rules-tests",
+  "private": true,
+  "type": "module",
+  "description": "Kiểm thử luật Firestore (chạy bằng npm run test:emu ở thư mục gốc). Tách gói riêng vì @firebase/rules-unit-testing cần firebase 12.",
+  "dependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "firebase": "^12.19.0"
+  }
+}

@@ -1,0 +1,37 @@
+name: Deploy Cloud Functions (bot, hóa đơn, ngân hàng)
+
+# Tách riêng khỏi deploy.yml để lỗi ở đây (thiếu quyền, chưa có token bot…) không chặn việc đăng trang web.
+on:
+  push:
+    branches: [main]
+    paths: ["functions/**", "firebase.json"]
+  workflow_dispatch:
+
+jobs:
+  deploy-functions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Kiểm thử trước khi deploy (lỗi thì không deploy)
+        run: npm test
+      - name: Deploy functions
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          if [ -z "$SA_JSON" ]; then echo "::error::Thiếu GitHub secret FIREBASE_SERVICE_ACCOUNT (xem docs/trien-khai.md)"; exit 1; fi
+          printf '%s' "$SA_JSON" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npm ci --prefix functions
+          # Token bot nằm trong Secret Manager, không trong mã nguồn. Chưa có bot thì lưu "-" (các hàm khác vẫn chạy).
+          printf '%s' "${BOT_TOKEN:--}" | npx firebase-tools functions:secrets:set TELEGRAM_BOT_TOKEN --data-file - --force --project vnhatro
+          npx firebase-tools deploy --only functions --project vnhatro --force

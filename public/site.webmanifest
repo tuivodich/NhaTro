@@ -1,0 +1,11 @@
+{
+  "name": "Nhà Trọ Việt — Quản lý nhà trọ",
+  "short_name": "Nhà trọ",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5eedd",
+  "theme_color": "#1d4a38",
+  "lang": "vi",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

@@ -1,0 +1,166 @@
+rules_version = '2';
+// LUẬT PHÂN QUYỀN — lớp backend thật của NhaTro (trình duyệt đọc/ghi Firestore trực tiếp). Mọi thay đổi phải có test ở tests/rules.test.mjs.
+// Vai trò: owner (mọi khu) · manager (khu được giao trong users.props) · staff (khu được giao; không xem hồ sơ/CCCD) · tenant (chỉ dữ liệu của mình).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function userPath() { return /databases/$(database)/documents/users/$(request.auth.uid); }
+    function me() { return get(userPath()).data; }
+    function role() { return signedIn() && exists(userPath()) ? me().role : 'none'; }
+    function isOwner() { return role() == 'owner'; }
+    function isAdmin() { return role() in ['owner', 'manager']; }
+    function isStaff() { return role() in ['owner', 'manager', 'staff']; }
+    function inProp(pid) { return pid in me().get('props', {}); }
+    /** Được làm việc ở khu `pid` (chủ, hoặc quản lý/nhân viên được giao khu đó). */
+    function canProp(pid) { return isOwner() || (role() in ['manager', 'staff'] && inProp(pid)); }
+    /** Được quản lý khu `pid` (chủ, hoặc quản lý được giao). */
+    function manages(pid) { return isOwner() || (role() == 'manager' && inProp(pid)); }
+    function isTenantOf(d) { return signedIn() && request.auth.uid in d.get('tenantUids', []); }
+    function sameProp() { return request.resource.data.propertyId == resource.data.propertyId; }
+    function auditOn() {
+      return !exists(/databases/$(database)/documents/settings/audit) || get(/databases/$(database)/documents/settings/audit).data.get('enabled', true) != false;
+    }
+
+    // Người đầu tiên đăng nhập (chưa có meta/bootstrap) trở thành chủ.
+    match /meta/bootstrap {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isOwner());
+      // Tự đăng ký luôn là người thuê; riêng người đầu tiên (cùng lúc tạo meta/bootstrap) là chủ.
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'email', 'phone', 'role'])
+        && (request.resource.data.role == 'tenant' ||
+          (request.resource.data.role == 'owner' && !exists(/databases/$(database)/documents/meta/bootstrap)
+            && getAfter(/databases/$(database)/documents/meta/bootstrap).data.uid == uid));
+      // Tự sửa tên/SĐT; chỉ chủ cấp vai trò và khu (không tự đổi quyền của chính mình).
+      allow update: if signedIn() && (
+        (request.auth.uid == uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone'])) ||
+        (isOwner() && uid != request.auth.uid && request.resource.data.role in ['owner', 'manager', 'staff', 'tenant']
+          && (!('props' in request.resource.data) || request.resource.data.props is map)));
+      allow delete: if isOwner() && uid != request.auth.uid;
+    }
+
+    // Cài đặt: app/contact công khai; bank (để hiện mã VietQR) cho người đã đăng nhập; bankhook (mã bí mật webhook) chỉ chủ.
+    match /settings/{id} {
+      allow read: if id in ['app', 'contact'] || (id == 'bank' && signedIn()) || (id == 'audit' && isStaff()) || (id == 'bankhook' && isOwner()) || (id != 'bankhook' && isAdmin());
+      allow write: if isOwner()
+        && (id != 'bankhook' || (request.resource.data.keys().hasOnly(['token']) && request.resource.data.token is string && request.resource.data.token.matches('^[A-Za-z0-9]{24,64}$')))
+        && (id != 'audit' || (request.resource.data.keys().hasOnly(['enabled']) && request.resource.data.enabled is bool));
+    }
+
+    match /properties/{pid} {
+      allow read: if canProp(pid);
+      allow create, delete: if isOwner();
+      allow update: if manages(pid);
+    }
+
+    match /rooms/{id} {
+      allow read: if canProp(resource.data.propertyId);
+      allow create: if manages(request.resource.data.propertyId)
+        && request.resource.data.status in ['trong', 'dang_thue', 'dang_sua', 'giu_cho'] && request.resource.data.rent is number;
+      allow update: if manages(resource.data.propertyId) && sameProp()
+        && request.resource.data.status in ['trong', 'dang_thue', 'dang_sua', 'giu_cho'];
+      allow delete: if manages(resource.data.propertyId);
+    }
+
+    // Bản sao công khai của phòng trống: không được chứa dữ liệu cá nhân (chỉ các trường dưới đây), id trùng id phòng, cùng khu với phòng.
+    match /listings/{id} {
+      allow read: if true;
+      allow create, update: if manages(request.resource.data.propertyId)
+        && exists(/databases/$(database)/documents/rooms/$(id))
+        && get(/databases/$(database)/documents/rooms/$(id)).data.propertyId == request.resource.data.propertyId
+        && request.resource.data.keys().hasOnly(['propertyId', 'propertyName', 'address', 'code', 'name', 'type', 'area', 'rent', 'maxPeople', 'amenities', 'desc', 'photos']);
+      allow delete: if manages(resource.data.propertyId);
+    }
+
+    // Hồ sơ người cư trú (CCCD…): chỉ chủ/quản lý của khu; người thuê đọc hồ sơ của chính mình. Trường uid chỉ Cloud Function (mã mời) gắn.
+    match /tenants/{id} {
+      allow read: if manages(resource.data.propertyId) || (signedIn() && resource.data.get('uid', '') == request.auth.uid);
+      allow create: if manages(request.resource.data.propertyId) && !('uid' in request.resource.data) && request.resource.data.fullName is string;
+      allow update: if manages(resource.data.propertyId) && manages(request.resource.data.propertyId)
+        && request.resource.data.get('uid', '') == resource.data.get('uid', '');
+      allow delete: if manages(resource.data.propertyId);
+    }
+
+    match /contracts/{id} {
+      allow read: if canProp(resource.data.propertyId) || isTenantOf(resource.data);
+      allow create: if manages(request.resource.data.propertyId) && request.resource.data.tenantUids is list
+        && request.resource.data.status == 'hieu_luc';
+      allow update: if manages(resource.data.propertyId) && sameProp()
+        && request.resource.data.status in ['hieu_luc', 'da_thanh_ly', 'huy'];
+      allow delete: if isOwner();
+    }
+
+    // Chỉ số đồng hồ: nhân viên của khu ghi được; chỉ số đã khóa (hóa đơn đã phát hành) chỉ quản lý sửa.
+    match /meterReadings/{id} {
+      allow read: if canProp(resource.data.propertyId);
+      allow create: if canProp(request.resource.data.propertyId) && request.resource.data.value is number && request.resource.data.value >= 0
+        && request.resource.data.get('locked', false) == false;
+      allow update: if canProp(resource.data.propertyId) && sameProp() && request.resource.data.value is number && request.resource.data.value >= 0
+        && ((resource.data.get('locked', false) == false && request.resource.data.get('locked', false) == false) || manages(resource.data.propertyId));
+      allow delete: if manages(resource.data.propertyId);
+    }
+
+    // Hóa đơn: quản lý lập (luôn bắt đầu là nháp, chưa thu); nhân viên chỉ ghi thêm một lần thu tiền vào hóa đơn đã phát hành; người thuê chỉ đọc của mình.
+    match /invoices/{id} {
+      allow read: if canProp(resource.data.propertyId) || isTenantOf(resource.data);
+      allow create: if manages(request.resource.data.propertyId) && request.resource.data.status == 'nhap' && request.resource.data.paid == 0
+        && request.resource.data.total is number && request.resource.data.tenantUids is list;
+      allow update: if (manages(resource.data.propertyId) && sameProp() && request.resource.data.status in ['nhap', 'da_gui', 'huy'])
+        || (role() == 'staff' && inProp(resource.data.propertyId) && resource.data.status == 'da_gui'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['paid', 'payLog'])
+          && request.resource.data.paid > resource.data.paid
+          && request.resource.data.payLog.size() == resource.data.payLog.size() + 1);
+      allow delete: if manages(resource.data.propertyId) && resource.data.status == 'nhap';
+    }
+
+    match /transactions/{id} {
+      allow read, delete: if manages(resource.data.propertyId);
+      allow create: if manages(request.resource.data.propertyId) && request.resource.data.type in ['thu', 'chi'] && request.resource.data.amount is number;
+      allow update: if manages(resource.data.propertyId) && sameProp() && request.resource.data.type in ['thu', 'chi'];
+    }
+
+    // Báo hỏng: nhân viên của khu; người thuê tạo cho đúng phòng trong hợp đồng của mình và xem phiếu mình gửi.
+    match /tickets/{id} {
+      function contract() { return get(/databases/$(database)/documents/contracts/$(request.resource.data.contractId)).data; }
+      allow read: if canProp(resource.data.propertyId) || (signedIn() && resource.data.createdBy == request.auth.uid);
+      allow create: if (canProp(request.resource.data.propertyId) && request.resource.data.createdBy == request.auth.uid)
+        || (signedIn() && request.resource.data.createdBy == request.auth.uid && request.resource.data.status == 'moi'
+          && request.resource.data.keys().hasOnly(['propertyId', 'roomId', 'roomCode', 'contractId', 'title', 'detail', 'photos', 'status', 'createdBy', 'createdName', 'createdOn'])
+          && request.resource.data.contractId is string
+          && exists(/databases/$(database)/documents/contracts/$(request.resource.data.contractId))
+          && request.auth.uid in contract().tenantUids && contract().status == 'hieu_luc'
+          && contract().roomId == request.resource.data.roomId && contract().propertyId == request.resource.data.propertyId);
+      allow update: if canProp(resource.data.propertyId) && sameProp();
+      allow delete: if manages(resource.data.propertyId);
+    }
+
+    // Nhật ký hoạt động: chỉ thêm (không sửa); chủ/quản lý đọc; chỉ chủ xóa; tắt bằng settings/audit.
+    match /auditLog/{id} {
+      allow create: if isStaff() && auditOn() && request.resource.data.by == request.auth.uid && request.resource.data.at == request.time;
+      allow read: if isAdmin();
+      allow delete: if isOwner();
+    }
+
+    // Giao dịch ngân hàng do webhook ghi; chủ/quản lý gán thủ công giao dịch chưa khớp.
+    match /bankTx/{id} {
+      allow read: if isAdmin();
+      allow update: if isAdmin() && resource.data.matched == false
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['matched', 'invoiceId', 'reason', 'assignedBy'])
+        && request.resource.data.matched == true && request.resource.data.assignedBy == request.auth.uid;
+    }
+
+    // Liên kết Telegram (Cloud Functions ghi). Người dùng xem/hủy liên kết của chính mình.
+    match /tgChats/{chat} {
+      allow read: if isOwner() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+    match /tgTenants/{chat} {
+      allow read, delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+    // tgLinks, tgSent, tgRate, invites…: chỉ Admin SDK (mặc định chặn).
+  }
+}
