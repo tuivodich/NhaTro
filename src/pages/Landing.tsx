@@ -22,7 +22,7 @@ export function PublicHeader() {
     <header className="pub-head">
       <Link to="/" className="brand"><img src="/favicon.svg" alt="" width="28" height="28" /> {DEFAULT_SITE_NAME}</Link>
       <span className="spacer" />
-      {user ? <Link to={isStaffRole(profile?.role) ? "/app" : "/tai-khoan"}>{isStaffRole(profile?.role) ? "Quản lý" : "Tài khoản"}</Link> : <Link to="/dang-nhap">Đăng nhập</Link>}
+      {user ? <><Link to="/ho-so">Hồ sơ của tôi</Link>{" · "}<Link to={isStaffRole(profile?.role) ? "/app" : "/tai-khoan"}>{isStaffRole(profile?.role) ? "Quản lý" : "Tài khoản"}</Link></> : <Link to="/dang-nhap">Đăng nhập</Link>}
     </header>
   );
 }

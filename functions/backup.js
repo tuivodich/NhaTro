@@ -1,7 +1,7 @@
 "use strict";
 
 /** Các bộ sưu tập được sao lưu (không gồm ảnh giấy tờ trong Storage, không gồm nhật ký tạm như tgRate/tgSent/pend). */
-const COLLECTIONS = ["users", "properties", "rooms", "listings", "tenants", "contracts", "meterReadings", "invoices", "transactions", "tickets", "bankTx", "settings", "tgChats", "tgTenants"];
+const COLLECTIONS = ["users", "profiles", "rentalRequests", "properties", "rooms", "listings", "tenants", "contracts", "meterReadings", "invoices", "transactions", "tickets", "bankTx", "settings", "tgChats", "tgTenants"];
 const NAME_RE = /^nhatro-\d{8}-\d{6}\.json$/;
 const PREFIX = "backups/";
 

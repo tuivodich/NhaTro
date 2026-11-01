@@ -25,6 +25,11 @@ service firebase.storage {
       allow create, update: if canProp(pid) && isImage();
       allow delete: if manages(pid);
     }
+    // Ảnh giấy tờ trong "Hồ sơ của tôi": chỉ chính chủ (Cloud Function chép sang hồ sơ người thuê khi được đồng ý).
+    match /profiles/{uid}/{file} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid && isImage();
+    }
     // Ảnh báo hỏng: người gửi tải vào thư mục của mình; nhân viên xem. Đường dẫn: tickets/{uid}/{file}
     match /tickets/{uid}/{file} {
       allow read: if request.auth != null && (request.auth.uid == uid || role() in ['owner', 'manager', 'staff']);

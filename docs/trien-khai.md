@@ -15,6 +15,17 @@ Mã nguồn đã cấu hình sẵn cho project `vnhatro` và trang `nhatroviet.w
 3. Tạo khóa JSON → dán toàn bộ nội dung vào GitHub secret **`FIREBASE_SERVICE_ACCOUNT`**.
 4. Bật API (lần đầu deploy functions thường báo thiếu): Cloud Functions, Cloud Build, Artifact Registry, Cloud Scheduler, Secret Manager, Cloud Run, Eventarc.
 
+### Quyền cho hàm chạy theo sự kiện (một lần, chủ project làm)
+Hàm `rentalRequestNotify` (báo Telegram khi có đăng ký thuê) là trigger Firestore. Service account deploy không tự cấp được quyền này, nên chủ project chạy trong **Cloud Shell** (https://console.cloud.google.com/?project=vnhatro → biểu tượng `>_`):
+
+```bash
+gcloud projects add-iam-policy-binding vnhatro --member=serviceAccount:service-768854749321@gcp-sa-pubsub.iam.gserviceaccount.com --role=roles/iam.serviceAccountTokenCreator --condition=None
+gcloud projects add-iam-policy-binding vnhatro --member=serviceAccount:768854749321-compute@developer.gserviceaccount.com --role=roles/run.invoker --condition=None
+gcloud projects add-iam-policy-binding vnhatro --member=serviceAccount:768854749321-compute@developer.gserviceaccount.com --role=roles/eventarc.eventReceiver --condition=None
+```
+
+Hàm gọi từ trình duyệt báo lỗi `internal` → Cloud Run → chọn các dịch vụ → Permissions → thêm `allUsers` vai trò *Cloud Run Invoker* (mỗi hàm tự kiểm tra đăng nhập và vai trò).
+
 ## 3. Bot Telegram (tùy chọn, làm sau cũng được)
 1. Nhắn **@BotFather** → `/newbot` → lấy token.
 2. Đặt GitHub secret **`TELEGRAM_BOT_TOKEN`** = token. Chưa có thì các hàm vẫn deploy, chỉ không gửi Telegram.

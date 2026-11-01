@@ -6,7 +6,7 @@ import { useI18n } from "../i18n";
 import { useAudit } from "../lib/audit";
 import { parseCccdQr } from "../lib/cccd";
 import { DOC_IMAGES, DOC_TYPES, docNumberError, docTypeOf, maskDoc, normDocNumber, type DocImageField, type DocType } from "../lib/idDoc";
-import { imageUrl, uploadImage, removeImage } from "../lib/listings";
+import { uploadImage, removeImage } from "../lib/listings";
 import { fmtDate, normName, randomCode } from "../lib/format";
 import { SITE_URL } from "../lib/siteConfig";
 import type { Contract, Tenant, TamTruStatus } from "../lib/types";
@@ -14,29 +14,10 @@ import DateInput from "../components/DateInput";
 import Modal from "../components/Modal";
 import PropSelect from "../components/PropSelect";
 import QrScan from "../components/QrScan";
+import DocImageBox from "../components/DocImageBox";
 
 /** Bản nháp hồ sơ: `id` có sẵn ngay khi mở form thêm mới (để tải ảnh giấy tờ trước khi lưu); `isNew` = chưa lưu lần nào. */
 type Draft = Omit<Tenant, "id"> & { id: string; isNew?: boolean; uploaded?: string[] };
-
-/** Ảnh giấy tờ: xem (tải đường dẫn khi bấm, vì ảnh là dữ liệu nhạy cảm) + chụp bằng camera hoặc chọn ảnh có sẵn. */
-function DocImageBox({ label, path, busy, onPick }: { label: string; path?: string; busy: boolean; onPick: (f?: File) => void }) {
-  const [url, setUrl] = useState("");
-  const [shownFor, setShownFor] = useState("");
-  const show = () => imageUrl(path!).then((u) => { setUrl(u); setShownFor(path!); }).catch(() => alert("Không mở được ảnh"));
-  return (
-    <div className="col docbox">
-      <small><b>{label}</b></small>
-      {path ? (url && shownFor === path
-        ? <a href={url} target="_blank" rel="noreferrer"><img className="docimg" src={url} alt={label} /></a>
-        : <button type="button" className="ghost" onClick={show}>🔒 Xem ảnh</button>)
-        : <small className="muted">Chưa có ảnh</small>}
-      <div className="row">
-        <label className="filebtn">{busy ? "Đang tải…" : "📷 Chụp"}<input type="file" accept="image/*" capture="environment" hidden disabled={busy} onChange={(e) => { onPick(e.target.files?.[0]); e.target.value = ""; }} /></label>
-        <label className="filebtn">{busy ? "…" : "🖼 Chọn ảnh"}<input type="file" accept="image/*" hidden disabled={busy} onChange={(e) => { onPick(e.target.files?.[0]); e.target.value = ""; }} /></label>
-      </div>
-    </div>
-  );
-}
 
 export default function TenantsPage() {
   const { current, inScope, byId, props } = useProps();

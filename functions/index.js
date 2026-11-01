@@ -11,6 +11,7 @@ const { createBot, webhookSecret, STAFF_COMMANDS, PUBLIC_COMMANDS } = require(".
 const { createInvoices } = require("./invoices");
 const { createBankHook } = require("./bankhook");
 const { createBackup } = require("./backup");
+const { createRequests } = require("./requests");
 const { safeEq } = require("./common");
 
 initializeApp();
@@ -77,6 +78,9 @@ exports.resendInvoice = onCall(opts, wrap(async (req) => {
 
 /** Người thuê nhập mã mời để xem hợp đồng/hóa đơn của mình. */
 exports.claimInvite = onCall({ region: REGION }, wrap(async (req) => createInvoices({ db: getFirestore() }).claimInvite(needAuth(req), req.data?.code)));
+
+/** Chủ/quản lý lập hồ sơ người thuê từ đăng ký thuê (chép "Hồ sơ của tôi" + ảnh giấy tờ nếu người gửi đồng ý). */
+exports.tenantFromRequest = onCall({ region: REGION }, wrap(async (req) => createRequests({ db: getFirestore(), bucket: getStorage().bucket() }).tenantFromRequest(needAuth(req), req.data?.id)));
 
 /** Webhook biến động số dư (SePay/Casso). */
 exports.bankHook = onRequest(opts, async (req, res) => {

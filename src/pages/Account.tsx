@@ -64,6 +64,7 @@ export default function Account() {
       <PublicHeader />
       <main className="pub-main">
         <div className="row between"><h2>Xin chào {profile?.name || user.email}</h2><button className="ghost" onClick={logout}>Đăng xuất</button></div>
+        <div className="card row between"><span>🪪 <b>Hồ sơ của tôi</b> — số điện thoại, giấy tờ, ảnh giấy tờ; lưu một lần, dùng lại khi đăng ký thuê.</span><Link className="btnlink primary" to="/ho-so">Mở hồ sơ</Link></div>
         {isStaffRole(profile?.role) && <p><Link to="/app">→ Vào trang quản lý</Link></p>}
         {msg && <p className="card">{msg}</p>}
 

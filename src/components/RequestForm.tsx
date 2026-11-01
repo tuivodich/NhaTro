@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { collection, doc, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
+import { collection, doc, getDoc, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
 import { useI18n } from "../i18n";
 import { fmtDate, todayStr } from "../lib/format";
-import type { Listing, RentalRequest } from "../lib/types";
+import type { Listing, Profile, RentalRequest } from "../lib/types";
 import DateInput, { DateTimeInput } from "./DateInput";
 import NumInput from "./NumInput";
 
@@ -29,7 +29,16 @@ export default function RequestForm({ listing }: { listing: Listing }) {
   const { L } = useI18n();
   const mine = useMyRequests().find((r) => r.roomId === listing.id);
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({ name: "", phone: "", people: 1, moveIn: "", viewAt: "", note: "" });
+  const [f, setF] = useState({ name: "", phone: "", people: 1, moveIn: "", viewAt: "", note: "", share: false });
+  const [prof, setProf] = useState<Profile | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    getDoc(doc(db, "profiles", user.uid)).then((s) => {
+      const d = (s.data() as Profile) ?? null;
+      setProf(d);
+      if (d) setF((x) => ({ ...x, name: d.fullName || x.name, phone: d.phone || x.phone, share: !!d.idNumber }));
+    }).catch(() => {});
+  }, [user]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [done, setDone] = useState(false);
@@ -43,7 +52,7 @@ export default function RequestForm({ listing }: { listing: Listing }) {
       <Link className="btnlink primary" to={`/dang-nhap?next=/phong/${listing.id}`}>Đăng nhập để đăng ký</Link>
     </div>
   );
-  if (mine && mine.status !== "huy") return (
+  if (mine && mine.status !== "huy" && mine.status !== "ket_thuc") return (
     <div className="card request">
       <h3>Yêu cầu của bạn</h3>
       <div>Trạng thái: <span className={`tag rq-${mine.status}`}>{L.requestStatus[mine.status]}</span></div>
@@ -68,6 +77,7 @@ export default function RequestForm({ listing }: { listing: Listing }) {
       if (f.moveIn) data.moveIn = f.moveIn;
       if (f.viewAt) data.viewAt = f.viewAt;
       if (f.note.trim()) data.note = f.note.trim().slice(0, 1000);
+      data.shareProfile = f.share;
       await setDoc(doc(db, "rentalRequests", `${user.uid}_${listing.id}`), data);
       setDone(true); setOpen(false);
     } catch (x) { setErr("Không gửi được: " + (x as Error).message); } finally { setBusy(false); }
@@ -77,7 +87,7 @@ export default function RequestForm({ listing }: { listing: Listing }) {
     <div className="card request">
       <h3>Đăng ký thuê / hẹn xem phòng</h3>
       {!open ? <>
-        <p>Để lại thông tin, chủ nhà sẽ liên hệ để hẹn xem phòng và giữ chỗ cho bạn.{mine?.status === "huy" ? " (Bạn đã hủy yêu cầu trước — có thể gửi lại.)" : ""}</p>
+        <p>Để lại thông tin, chủ nhà sẽ liên hệ để hẹn xem phòng và giữ chỗ cho bạn.{mine?.status === "huy" ? " (Bạn đã hủy yêu cầu trước — có thể gửi lại.)" : mine?.status === "ket_thuc" ? " (Bạn từng thuê phòng này — có thể đăng ký lại.)" : ""}</p>
         <div className="row"><button onClick={() => setOpen(true)}>📝 Đăng ký thuê phòng này</button></div>
       </> : (
         <form className="col" onSubmit={submit}>
@@ -91,6 +101,9 @@ export default function RequestForm({ listing }: { listing: Listing }) {
             <label>Muốn xem phòng lúc (tùy chọn)<DateTimeInput value={f.viewAt} min={todayStr()} onChange={(viewAt) => setF({ ...f, viewAt })} /></label>
           </div>
           <label>Ghi chú<textarea value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} maxLength={1000} placeholder="Nghề nghiệp, có xe máy không, câu hỏi về phòng…" /></label>
+          {prof?.idNumber
+            ? <label className="check"><input type="checkbox" checked={f.share} onChange={(e) => setF({ ...f, share: e.target.checked })} /> Cho phép chủ nhà dùng <Link to="/ho-so">Hồ sơ của tôi</Link> (giấy tờ{prof.idFront ? " và ảnh giấy tờ" : ""}) để lập hợp đồng, đăng ký tạm trú</label>
+            : <small>💡 Lưu <Link to="/ho-so">Hồ sơ của tôi</Link> (giấy tờ, ảnh) một lần để không phải đưa lại giấy tờ mỗi khi thuê.</small>}
           <small>Thông tin chỉ chủ nhà/quản lý khu xem được, dùng để liên hệ cho thuê.</small>
           {err && <p className="error">{err}</p>}
           <div className="row"><button type="submit" disabled={busy}>{busy ? "Đang gửi…" : "Gửi đăng ký"}</button><button type="button" className="ghost" onClick={() => setOpen(false)}>Hủy</button></div>
