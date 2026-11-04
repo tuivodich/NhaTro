@@ -26,8 +26,8 @@ label.check { flex-direction: row; align-items: center; gap: 6px; flex: 0 0 auto
 .roomchips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: .85rem; background: var(--line); }
 .chip.dang_thue { background: #dbeafe; color: #1e40af; } .chip.trong { background: #d6f0dc; color: #166534; } .chip.owe { outline: 2px solid var(--danger); }
-.card.room .cover, .card.listing .cover { width: 100%; height: 150px; object-fit: cover; border-radius: 10px; }
-.ph-empty { display: grid; place-items: center; font-size: 3rem; background: var(--bg); }
+.card.room .cover { width: 100%; height: 150px; object-fit: cover; border-radius: 10px; }
+
 .photos { display: flex; gap: 8px; flex-wrap: wrap; }
 .photos .ph { position: relative; } .photos img { width: 96px; height: 72px; object-fit: cover; border-radius: 8px; }
 .photos .ph button { position: absolute; top: 2px; right: 2px; padding: 0 6px; background: var(--card); }
@@ -43,26 +43,11 @@ label.check { flex-direction: row; align-items: center; gap: 6px; flex: 0 0 auto
 .qrvideo { width: 100%; max-height: 300px; background: #000; border-radius: 10px; }
 code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9em; }
 .pre { white-space: pre-wrap; }
-/* Trang công khai */
-.pub { min-height: 100vh; background: var(--bg); }
-.pub-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--header); color: var(--on-header); }
-.pub-head a { color: inherit; font-weight: 600; text-decoration: none; }
-.pub-head .brand { display: flex; align-items: center; gap: 8px; font-size: 1.15rem; }
-.hero { padding: 40px 16px; text-align: center; background: linear-gradient(160deg, var(--header), var(--accent)); color: var(--on-header); }
-.hero h1 { font-family: "Lora", Georgia, serif; margin: 0 0 8px; font-size: clamp(1.6rem, 5vw, 2.4rem); }
-.pub-main { max-width: 1000px; margin: 0 auto; padding: 16px; }
-.pub-main.narrow { max-width: 420px; }
-.pub-main h1, .pub-main h2 { font-family: "Lora", Georgia, serif; color: var(--accent); }
-.card.listing { text-decoration: none; color: inherit; } .card.listing:hover { border-color: var(--accent); }
-.gallery .big { width: 100%; max-height: 480px; object-fit: contain; background: #000; border-radius: 12px; }
-.thumbs { display: flex; gap: 6px; overflow-x: auto; margin-top: 6px; } .thumbs button { padding: 2px; } .thumbs button.on { border-color: var(--accent); }
-.thumbs img { width: 72px; height: 54px; object-fit: cover; border-radius: 6px; display: block; }
-.center-text { text-align: center; }
 /* Hóa đơn in */
 .invoice-page { max-width: 820px; margin: 0 auto; padding: 16px; }
 .invoice { background: #fff; color: #111; border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
 .invoice header { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-bottom: 2px solid #1d4a38; padding-bottom: 8px; margin-bottom: 8px; }
-.invoice h1 { margin: 0; font-family: "Lora", Georgia, serif; color: #1d4a38; font-size: 1.5rem; }
+.invoice h1 { margin: 0; font-family: var(--font-display); color: #1d4a38; font-size: 1.5rem; }
 .invoice .right { text-align: right; }
 .invoice .tbl th, .invoice .tbl td { border-color: #ddd; }
 .invoice tfoot th, .invoice tfoot td { font-size: 1rem; }

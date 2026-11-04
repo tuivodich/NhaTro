@@ -5,6 +5,7 @@ import { useAuth } from "../lib/auth";
 import { useAudit } from "../lib/audit";
 import { BANKS, EMPTY_BANK, isBankReady, vietQrUrl, type Bank } from "../lib/banks";
 import { randomCode } from "../lib/format";
+import ThemePicker from "../components/ThemePicker";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) { return <div className="card"><h3>{title}</h3>{children}</div>; }
 
@@ -47,6 +48,7 @@ export default function SettingsPage() {
         {owner && <div className="row"><button className="ghost" onClick={tgSetup}>Kết nối bot (chạy một lần sau khi có token)</button></div>}
       </Section>
       {owner && <>
+        <ThemePicker />
         <Section title="Tài khoản nhận tiền (hiện mã VietQR trên hóa đơn)">
           <form className="col" onSubmit={saveBank}>
             <div className="row">

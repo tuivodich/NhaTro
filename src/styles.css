@@ -2,13 +2,19 @@
 :root {
   --bg: #f5eedd; --fg: #2a2118; --card: #fffaf0; --accent: #1d4a38; --on-accent: #fff; --wood: #8a5a2b; --orange: #e08a2e;
   --muted: #7a6b57; --line: #e4d6b8; --danger: #b3261e; --info: #1e4f8a; --header: #123528; --on-header: #f3ead4;
+  /* Biến giao diện (themes.css ghi đè theo [data-theme]): phông, bo góc, viền, bóng, màu phụ, đầu trang công khai. */
+  --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif; --font-display: "Lora", Georgia, serif;
+  --radius: 14px; --radius-sm: 10px; --btn-radius: 10px; --card-border: 1px solid var(--line); --shadow: none; --shadow-sm: none;
+  --accent2: var(--orange); --on-accent2: #2a2118; --pubhead-bg: var(--header); --pubhead-fg: var(--on-header);
+  --hero-bg: linear-gradient(160deg, var(--header), var(--accent)); --hero-fg: var(--on-header);
+  --input-border: 1px solid var(--line); --input-bg: var(--bg); --cover-ph: var(--bg);
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #131c17; --fg: #ece6d6; --card: #1b2820; --accent: #7fc79a; --on-accent: #0c1f15; --wood: #d4a063; --orange: #e9a04a;
     --muted: #a99f8b; --line: #2c3c32; --danger: #ff8a80; --info: #8cb8f0; --header: #0d2219; --on-header: #ece6d6; color-scheme: dark; }
 }
 * { box-sizing: border-box; }
-body { margin: 0; font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--fg); }
+body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--fg); }
 .shell > header { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--header); color: var(--on-header); border-bottom: 4px solid var(--wood); }
 .shell > header .ghost { color: inherit; border-color: rgba(255, 255, 255, .35); }
 .shell > header .ghost:hover { background: rgba(255, 255, 255, .1); }
@@ -18,16 +24,16 @@ body { margin: 0; font-family: "Be Vietnam Pro", system-ui, -apple-system, "Sego
 .shell > nav a:hover { background: var(--bg); }
 .shell > nav a.active { background: var(--accent); color: var(--on-accent); }
 .shell > main { max-width: 900px; margin: 0 auto; padding: 16px; }
-.shell h2 { font-family: "Lora", Georgia, serif; color: var(--accent); }
+.shell h2 { font-family: var(--font-display); color: var(--accent); }
 .center { margin: 10vh auto 0; max-width: 360px; text-align: center; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin: 12px 0; display: flex; flex-direction: column; gap: 8px; }
+.card { background: var(--card); border: var(--card-border); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 14px; margin: 12px 0; display: flex; flex-direction: column; gap: 8px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
 .grid .card { margin: 0; }
-.stats big { font-family: "Lora", Georgia, serif; font-size: 2rem; font-weight: 700; color: var(--accent); }
+.stats big { font-family: var(--font-display); font-size: 2rem; font-weight: 700; color: var(--accent); }
 label { display: flex; flex-direction: column; gap: 4px; text-align: left; font-size: .9rem; color: var(--muted); flex: 1; }
-input, select, button, textarea { font: inherit; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+input, select, button, textarea { font: inherit; padding: 8px 10px; border-radius: var(--radius-sm); border: var(--input-border); background: var(--input-bg); color: var(--fg); }
 input:focus-visible, select:focus-visible, button:focus-visible, textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 1px; }
-button { background: var(--accent); color: var(--on-accent); border: 0; cursor: pointer; font-weight: 600; }
+button { background: var(--accent); color: var(--on-accent); border: 0; border-radius: var(--btn-radius); cursor: pointer; font-weight: 600; }
 button:disabled { opacity: .6; cursor: not-allowed; }
 button.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); font-weight: 500; }
 button.ghost:hover { background: var(--bg); }
@@ -55,7 +61,7 @@ table.cal { border-collapse: collapse; min-width: 700px; width: 100%; margin-top
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: flex-start; justify-content: center; padding: 16px; overflow-y: auto; z-index: 10; }
 .modal { max-width: 520px; width: 100%; margin: 4vh 0; }
 .modal h3, .modal h4 { margin: 0; }
-.brand { color: inherit; text-decoration: none; font-family: "Lora", Georgia, serif; font-weight: 700; }
+.brand { color: inherit; text-decoration: none; font-family: var(--font-display); font-weight: 700; }
 .shell > main a { color: var(--accent); font-weight: 600; }
 .couponcode { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: .05em; }
 .card.coupon.used { opacity: .65; }
@@ -167,7 +173,7 @@ table.cal { border-collapse: collapse; min-width: 700px; width: 100%; margin-top
 .invoice-actions a { text-decoration: none; padding: 8px 14px; border-radius: 10px; border: 1px solid #bbb; color: #1c1c1c; background: #fff; }
 .invoice { max-width: 820px; margin: 0 auto; background: #fff; color: #1c1c1c; padding: 36px 40px; border-radius: 8px; box-shadow: 0 6px 24px rgba(0, 0, 0, .15); position: relative; line-height: 1.5; }
 .invoice header { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; border-bottom: 2px solid #1d4a38; padding-bottom: 16px; margin-bottom: 18px; }
-.invoice h1 { font-family: "Lora", Georgia, serif; font-size: 1.5rem; color: #1d4a38; margin: 0 0 4px; }
+.invoice h1 { font-family: var(--font-display); font-size: 1.5rem; color: #1d4a38; margin: 0 0 4px; }
 .invoice h2 { font-size: 1.15rem; letter-spacing: .04em; margin: 0 0 6px; color: #1d4a38; }
 .invoice h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: #6a5a45; margin: 0 0 4px; }
 .invoice .invoice-meta { text-align: right; }

@@ -24,4 +24,5 @@ React 19 + Vite + TypeScript + Firebase (Auth, Firestore, Storage, Hosting, Clou
 - Nhãn dùng chung (trạng thái, vai trò, loại phòng…) đặt trong `src/i18n/index.tsx`; giao diện tiếng Việt (tiếng Anh thêm sau).
 - Dữ liệu theo khu đọc bằng `useScoped()` (`src/lib/scoped.tsx`): người không phải chủ chỉ được truy vấn `where("propertyId","==",khu)`.
 - Thay đổi giao diện quan trọng: chạy `npm run test:e2e` (Playwright + emulator).
+- Giao diện: màu/phông/bo góc/viền/bóng là biến CSS theo `[data-theme]` trong `src/themes.css` (chọn ở Cài đặt → `settings/app.theme`, đọc bằng `useSite()`); thêm giao diện mới = thêm id vào `src/lib/themeConfig.ts` + `index.html` + luật `settings/app` + khối CSS. Không viết cứng màu trong trang; dùng biến (`var(--accent)`…).
 - Báo cáo sau mỗi việc: đã làm gì, đã kiểm tra gì, còn giới hạn gì.

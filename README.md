@@ -19,6 +19,7 @@ Hệ thống quản lý phòng trọ và nhà cho thuê gồm: web quản trị,
 | Tài chính | Thu chi khác, báo cáo tháng/năm, công nợ theo tuổi nợ, xuất Excel (CSV), đối soát ngân hàng |
 | Tự động | Webhook SePay/Casso tự gạch nợ; 08:00 nhắc hạn trả tiền, hợp đồng sắp hết hạn, chỉ số chưa ghi, tạm trú; 21:00 báo cáo ngày; 02:00 sao lưu |
 | Báo hỏng | Người thuê gửi qua web/bot; nhân viên nhận, xử lý, ghi chi phí |
+| Giao diện | Chủ chọn ở **Hệ thống → Cài đặt → Giao diện website**: Tươi sáng (mặc định), Trẻ trung, Gỗ & rừng; đổi cả tên website. Xem thử riêng bằng `?theme=tretrung`. Lưu ở `settings/app`, áp dụng cho trang công khai, cổng người thuê và trang quản trị |
 | Phân quyền | Chủ (mọi khu) · Quản lý (khu được giao) · Nhân viên (ghi chỉ số, thu tiền mặt, không xem CCCD) · Người thuê |
 
 ## Kiến trúc
