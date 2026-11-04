@@ -106,3 +106,20 @@
   .pub-head .btn-login { padding: 8px 14px; }
   .card.contact { padding: 24px; }
 }
+
+/* Trang giới thiệu sản phẩm (/gioi-thieu) */
+.saas-sec { margin: 56px 0 0; }
+.saas-sec:first-child { margin-top: 8px; }
+.saas-sec h2 { margin: 0 0 8px; font-size: 2rem; letter-spacing: -.02em; }
+.saas-lead { margin: 0 0 24px; font-size: 1.05rem; }
+.saas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+.card.saas-feature { margin: 0; padding: 24px; gap: 8px; box-shadow: var(--shadow); }
+.saas-feature h3 { margin: 0; font-size: 1.15rem; }
+.saas-feature p { margin: 0; color: var(--muted); line-height: 1.6; }
+.saas-ico { display: grid; place-items: center; width: 48px; height: 48px; font-size: 1.5rem; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--accent) 12%, var(--card)); }
+.saas-faq { display: grid; gap: 12px; max-width: 760px; }
+.saas-faq details { margin: 0; padding: 16px 20px; }
+.saas-faq summary { cursor: pointer; font-weight: 700; min-height: 24px; }
+.saas-faq p { margin: 10px 0 0; color: var(--muted); line-height: 1.6; }
+.saas-cta h3 { font-family: var(--font-display); }
+@media (max-width: 600px) { .card.contact.saas-cta { padding: 24px; } }
