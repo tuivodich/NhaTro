@@ -10,7 +10,17 @@
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lora:wght@600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lora:wght@600;700&family=Nunito:wght@500;600;700;800&family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script>
+      // Gán giao diện đã nhớ (hoặc ?theme=…) trước khi vẽ trang để không bị chớp giao diện khác.
+      (function () {
+        try {
+          var ok = ["sang", "tretrung", "go"], t = new URLSearchParams(location.search).get("theme");
+          if (ok.indexOf(t) < 0) { var c = JSON.parse(localStorage.getItem("nhatro.site") || "{}"); t = ok.indexOf(c.theme) >= 0 ? c.theme : "sang"; }
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) { document.documentElement.setAttribute("data-theme", "sang"); }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

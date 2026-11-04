@@ -1,0 +1,104 @@
+/*
+ * Giao diện website — chủ chọn ở Cài đặt (settings/app.theme), gắn vào <html data-theme="…">.
+ * "go" (Gỗ & rừng) dùng biến mặc định ở styles.css. Mỗi giao diện chỉ ghi đè biến + vài nét riêng; bố cục dùng chung.
+ * Chọn theo [data-theme] (không chỉ :root) để ô xem thử trong Cài đặt cũng dùng được.
+ */
+
+/* ===== Tươi sáng: xanh da trời + vàng nắng, bo tròn mềm ===== */
+[data-theme="sang"] {
+  --bg: #F0F9FF; --fg: #0C4A6E; --card: #FFFFFF; --accent: #0369A1; --on-accent: #FFFFFF; --wood: #FACC15; --orange: #F59E0B;
+  --muted: #075985; --line: #BAE6FD; --danger: #B91C1C; --info: #0369A1; --header: #0C4A6E; --on-header: #F0F9FF;
+  --font: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; --font-display: "Nunito", system-ui, sans-serif;
+  --radius: 24px; --radius-sm: 14px; --btn-radius: 999px; --card-border: 0;
+  --shadow: 0 10px 30px rgba(3, 105, 161, .12); --shadow-sm: 0 4px 16px rgba(3, 105, 161, .08);
+  --accent2: #FACC15; --on-accent2: #422006; --pubhead-bg: transparent; --pubhead-fg: #0C4A6E;
+  --hero-bg: transparent; --hero-fg: #0C4A6E; --input-border: 2px solid #BAE6FD; --input-bg: #F0F9FF;
+  --cover-ph: linear-gradient(135deg, #BAE6FD, #FEF3C7);
+  color-scheme: light;
+}
+[data-theme="sang"] .hero { background: linear-gradient(180deg, #E0F2FE 0%, #BAE6FD 100%); margin: 8px auto 0; max-width: 1112px; border-radius: 36px; }
+[data-theme="sang"] .hero-in { text-align: center; justify-content: center; padding: 64px 40px; }
+[data-theme="sang"] .hero p { margin-left: auto; margin-right: auto; color: #075985; font-weight: 600; opacity: 1; }
+[data-theme="sang"] .hero-cta { justify-content: center; }
+[data-theme="sang"] .hero .btn-cta { background: var(--accent2); color: var(--on-accent2); }
+[data-theme="sang"] .hero .btn-alt { background: #FFFFFF; color: #0C4A6E; border-color: #FFFFFF; }
+[data-theme="sang"] .hero .hl { color: #0369A1; }
+[data-theme="sang"] .hero-deco { display: block; position: absolute; border-radius: 999px; }
+[data-theme="sang"] .hero-deco.d1 { top: -50px; right: -30px; width: 200px; height: 200px; background: #FDE68A; opacity: .8; }
+[data-theme="sang"] .hero-deco.d2 { bottom: -70px; left: -40px; width: 220px; height: 220px; background: #FFFFFF; opacity: .45; }
+[data-theme="sang"] .logo-mark { border-radius: 14px; }
+@media (max-width: 1160px) { [data-theme="sang"] .hero { margin: 8px 16px 0; max-width: none; } }
+[data-theme="sang"] .price-badge { display: block; }
+[data-theme="sang"] .price-line { display: none; }
+[data-theme="sang"] .step-n { border-radius: 22px; width: 64px; height: 64px; background: #BAE6FD; }
+[data-theme="sang"] .step:nth-child(2) .step-n { background: #FDE68A; color: #713F12; }
+[data-theme="sang"] .step { text-align: center; }
+[data-theme="sang"] .step-n { margin-left: auto; margin-right: auto; }
+[data-theme="sang"] .steps h2 { text-align: center; }
+[data-theme="sang"] .card.contact { border-radius: 36px; }
+[data-theme="sang"] .shell > header { border-bottom-width: 4px; }
+
+/* ===== Trẻ trung: tím + hồng + xanh chanh, viền đậm, bóng lệch ===== */
+[data-theme="tretrung"] {
+  --bg: #FFFBEB; --fg: #1E1B4B; --card: #FFFFFF; --accent: #6D28D9; --on-accent: #FFFFFF; --wood: #A3E635; --orange: #DB2777;
+  --muted: #4338CA; --line: #C7D2FE; --danger: #B91C1C; --info: #4338CA; --header: #1E1B4B; --on-header: #FFFFFF;
+  --font: "Lexend", system-ui, -apple-system, "Segoe UI", sans-serif; --font-display: "Lexend", system-ui, sans-serif;
+  --radius: 18px; --radius-sm: 12px; --btn-radius: 12px; --card-border: 2px solid #1E1B4B;
+  --shadow: 6px 6px 0 #1E1B4B; --shadow-sm: 3px 3px 0 #1E1B4B;
+  --accent2: #A3E635; --on-accent2: #1E1B4B; --pubhead-bg: #1E1B4B; --pubhead-fg: #FFFFFF;
+  --hero-bg: #1E1B4B; --hero-fg: #FFFFFF; --input-border: 2px solid #1E1B4B; --input-bg: #FFFBEB;
+  --cover-ph: linear-gradient(135deg, #DDD6FE, #FBCFE8);
+  color-scheme: light;
+}
+[data-theme="tretrung"] .logo-mark { border: 2px solid #FFFFFF; transform: rotate(-6deg); }
+[data-theme="tretrung"] .pub-head .btn-login { background: #A3E635; color: #1E1B4B; }
+[data-theme="tretrung"] .eyebrow { background: #DB2777; color: #FFFFFF; border-radius: 8px; transform: rotate(-2deg); }
+[data-theme="tretrung"] .hero h1 { font-weight: 800; letter-spacing: -.04em; }
+[data-theme="tretrung"] .hero p { color: #E0E7FF; opacity: 1; }
+[data-theme="tretrung"] .hero .btn-cta { border: 2px solid #A3E635; box-shadow: 4px 4px 0 #DB2777; }
+[data-theme="tretrung"] .hero-text { flex: 1 1 520px; }
+[data-theme="tretrung"] .hero-stickers { display: flex; flex-direction: column; gap: 14px; flex: 1 1 300px; min-width: 0; }
+[data-theme="tretrung"] .hero-stickers span { display: block; border: 2px solid #FFFFFF; border-radius: 20px; padding: 18px 22px; font-weight: 700; font-size: 1.2rem; color: #FFFFFF; }
+[data-theme="tretrung"] .hero-stickers span:nth-child(1) { background: #6D28D9; transform: rotate(1.5deg); }
+[data-theme="tretrung"] .hero-stickers span:nth-child(2) { background: #BE185D; transform: rotate(-1.5deg); margin-left: 24px; }
+[data-theme="tretrung"] .hero-stickers span:nth-child(3) { background: #A3E635; color: #1E1B4B; transform: rotate(1deg); }
+[data-theme="tretrung"] .chip-btn { border: 2px solid #1E1B4B; box-shadow: none; }
+[data-theme="tretrung"] .chip-btn[aria-pressed="true"] { background: #1E1B4B; color: #FFFFFF; }
+[data-theme="tretrung"] .badge-type { background: #A3E635; color: #1E1B4B; border: 2px solid #1E1B4B; border-radius: 8px; transform: rotate(-3deg); }
+[data-theme="tretrung"] .listing .cover-wrap { border-bottom: 2px solid #1E1B4B; }
+[data-theme="tretrung"] .price-line { font-size: 1.6rem; font-weight: 800; color: #6D28D9; letter-spacing: -.03em; }
+[data-theme="tretrung"] .fact { border: 2px solid #1E1B4B; border-radius: 8px; background: #FFFBEB; font-weight: 600; }
+[data-theme="tretrung"] .btn-fake { background: #DB2777; color: #FFFFFF; border: 2px solid #1E1B4B; }
+[data-theme="tretrung"] .steps { background: #6D28D9; margin: 56px 0 0; padding: 40px 32px 44px; color: #FFFFFF; border: 2px solid #1E1B4B; border-radius: 24px; box-shadow: 8px 8px 0 #1E1B4B; }
+[data-theme="tretrung"] .steps h2 { color: #FFFFFF; }
+[data-theme="tretrung"] .step { box-shadow: 6px 6px 0 #A3E635; color: #1E1B4B; }
+[data-theme="tretrung"] .step-n { background: transparent; color: #DB2777; font-size: 2.6rem; width: auto; height: auto; justify-content: start; }
+[data-theme="tretrung"] .card.contact { box-shadow: 8px 8px 0 #1E1B4B; border-radius: 24px; }
+[data-theme="tretrung"] .price-big { border: 2px solid #1E1B4B; border-radius: 12px; box-shadow: 3px 3px 0 #1E1B4B; }
+[data-theme="tretrung"] .card.request { border-color: #1E1B4B; box-shadow: 6px 6px 0 #DB2777; }
+[data-theme="tretrung"] .tbl th, [data-theme="tretrung"] .tbl td { border-bottom-color: #C7D2FE; }
+
+/* ===== Gỗ & rừng (giao diện đầu tiên): giữ màu mặc định, chỉnh nhẹ vài chỗ ===== */
+[data-theme="go"] .hero p { opacity: .9; }
+[data-theme="go"] .hero-stickers { display: none; }
+[data-theme="go"] .price-line { color: var(--accent); }
+[data-theme="go"] .logo-mark { background: transparent; color: var(--accent2); }
+[data-theme="go"] .card.contact { background: var(--card); color: var(--fg); }
+[data-theme="go"] .contact .btnlink { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+[data-theme="go"] .contact .btnlink.alt { background: transparent; color: var(--fg); border-color: var(--line); }
+[data-theme="go"] .hero .btn-cta { background: var(--orange); color: #FFFFFF; }
+[data-theme="go"] .chip-btn[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
+/* ===== Ô xem thử giao diện trong Cài đặt ===== */
+.theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.theme-card { display: flex; flex-direction: column; align-items: stretch; gap: 8px; text-align: left; padding: 10px; background: var(--card); color: var(--fg); border: 2px solid var(--line); border-radius: var(--radius-sm); font-weight: 400; }
+.theme-card.on { border-color: var(--accent); outline: 3px solid color-mix(in srgb, var(--accent) 35%, transparent); }
+.theme-card small { color: var(--muted); }
+.theme-thumb { display: flex; flex-direction: column; height: 130px; border-radius: 10px; overflow: hidden; background: var(--bg); border: 1px solid var(--line); font-family: var(--font); }
+.theme-thumb .tt-head { height: 18px; background: var(--pubhead-bg, var(--card)); border-bottom: 1px solid var(--line); }
+.theme-thumb .tt-hero { height: 42px; background: var(--hero-bg, var(--accent)); }
+.theme-thumb[data-theme="sang"] .tt-hero { background: linear-gradient(180deg, #E0F2FE, #BAE6FD); }
+.theme-thumb .tt-cards { display: flex; gap: 6px; padding: 8px; flex: 1; }
+.theme-thumb .tt-cards i { flex: 1; background: var(--card); border: var(--card-border); border-radius: calc(var(--radius) / 3); box-shadow: var(--shadow-sm); position: relative; }
+.theme-thumb .tt-cards i::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: 6px; height: 8px; border-radius: var(--btn-radius); background: var(--accent); }
+.theme-thumb .tt-cards i::before { content: ""; position: absolute; left: 6px; top: 6px; width: 18px; height: 8px; border-radius: 999px; background: var(--accent2); }

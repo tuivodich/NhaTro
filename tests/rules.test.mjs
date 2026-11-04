@@ -87,6 +87,18 @@ await check("chủ sửa settings/bank", setDoc(doc(own, "settings/bank"), { ban
 await check("chủ KHÔNG đặt bankhook token yếu", setDoc(doc(own, "settings/bankhook"), { token: "123" }), false);
 await check("chủ đặt bankhook token", setDoc(doc(own, "settings/bankhook"), { token: "A".repeat(40) }), true);
 
+// ===== Giao diện website (settings/app) =====
+await check("chủ đổi giao diện sang trẻ trung", setDoc(doc(own, "settings/app"), { theme: "tretrung", name: "Nhà Trọ Việt" }), true);
+await check("chủ đổi giao diện sang tươi sáng", setDoc(doc(own, "settings/app"), { theme: "sang", name: "Nhà Trọ Việt" }), true);
+await check("chủ đổi giao diện sang gỗ & rừng", setDoc(doc(own, "settings/app"), { theme: "go", name: "X" }), true);
+await check("KHÔNG nhận giao diện lạ", setDoc(doc(own, "settings/app"), { theme: "hacker", name: "X" }), false);
+await check("KHÔNG nhận trường lạ trong settings/app", setDoc(doc(own, "settings/app"), { theme: "sang", name: "X", html: "<script>" }), false);
+await check("KHÔNG nhận tên quá dài", setDoc(doc(own, "settings/app"), { theme: "sang", name: "x".repeat(61) }), false);
+await check("KHÔNG nhận tên sai kiểu", setDoc(doc(own, "settings/app"), { theme: "sang", name: 5 }), false);
+await check("manager KHÔNG đổi giao diện", setDoc(doc(man, "settings/app"), { theme: "tretrung", name: "X" }), false);
+await check("tenant KHÔNG đổi giao diện", setDoc(doc(t1, "settings/app"), { theme: "tretrung", name: "X" }), false);
+await check("anon đọc được giao diện", getDoc(doc(anon, "settings/app")), true);
+
 // ===== Khu =====
 await check("manager A đọc khu A", getDoc(doc(man, "properties/A")), true);
 await check("manager A KHÔNG đọc khu B", getDoc(doc(man, "properties/B")), false);

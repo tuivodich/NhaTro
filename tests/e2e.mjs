@@ -180,6 +180,7 @@ try {
   const pub = await (await browser.newContext()).newPage();
   await pub.goto(BASE + "/");
   await pub.getByText("Phòng 2").waitFor();
+  ok("giao diện mặc định là Tươi sáng", await pub.evaluate(() => document.documentElement.dataset.theme) === "sang");
   ok("trang công khai có P2, không có P1", !(await pub.getByText("Phòng 1", { exact: true }).count()));
 
   // 10) Người thuê: chưa gắn hồ sơ thì không thấy hóa đơn nào (claimInvite cần Cloud Functions → kiểm tra quyền)
@@ -272,6 +273,21 @@ try {
   ok("đổi trạng thái qua lại", await card.locator(".tag", { hasText: "Đã ký hợp đồng" }).waitFor({ timeout: 10000 }).then(() => true, () => false));
   await guest.goto(BASE + "/tai-khoan");
   ok("khách thấy “Đã ký hợp đồng” trong tài khoản", await guest.locator(".card", { hasText: "Đăng ký thuê của tôi" }).getByText("Đã ký hợp đồng").waitFor({ timeout: 10000 }).then(() => true, () => false));
+  // 17) Chủ đổi giao diện + tên website → khách thấy ngay; admin xem thử trước khi lưu
+  await own.goto(BASE + "/app/cai-dat");
+  await own.getByRole("radio", { name: /Trẻ trung/ }).click();
+  ok("xem thử giao diện ngay khi bấm (chưa lưu)", await own.waitForFunction(() => document.documentElement.dataset.theme === "tretrung", null, { timeout: 5000 }).then(() => true, () => false));
+  await own.getByLabel("Tên hiển thị của website").fill("Nhà Trọ Ánh Dương");
+  await own.getByRole("button", { name: "Lưu giao diện" }).click();
+  await own.getByText(/Đã lưu\. Giao diện mới/).waitFor();
+  const pub3 = await (await browser.newContext()).newPage();
+  await pub3.goto(BASE + "/");
+  ok("khách thấy giao diện Trẻ trung sau khi chủ lưu", await pub3.waitForFunction(() => document.documentElement.dataset.theme === "tretrung", null, { timeout: 10000 }).then(() => true, () => false));
+  ok("khách thấy tên website mới", await pub3.locator(".pub-head .brand", { hasText: "Nhà Trọ Ánh Dương" }).waitFor({ timeout: 10000 }).then(() => true, () => false));
+  await own.goto(BASE + "/app");
+  ok("trang quản trị cũng đổi giao diện + tên", await own.locator(".shell > header .brand", { hasText: "Nhà Trọ Ánh Dương" }).waitFor({ timeout: 10000 }).then(() => true, () => false) && await own.evaluate(() => document.documentElement.dataset.theme) === "tretrung");
+  await pub3.goto(BASE + "/?theme=go");
+  ok("?theme=go xem thử riêng, không lưu", await pub3.evaluate(() => document.documentElement.dataset.theme) === "go");
 } catch (e) {
   fail++; console.log("FAIL (ngoại lệ)", e.message.split("\n").slice(0, 3).join(" | "));
   for (const c of browser.contexts()) for (const pg of c.pages()) await pg.screenshot({ path: `/tmp/claude-0/e2e-${Date.now()}.png`, fullPage: true }).catch(() => {});

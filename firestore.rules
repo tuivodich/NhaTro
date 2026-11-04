@@ -48,7 +48,11 @@ service cloud.firestore {
       allow read: if id in ['app', 'contact'] || (id == 'bank' && signedIn()) || (id == 'audit' && isStaff()) || (id == 'bankhook' && isOwner()) || (id != 'bankhook' && isAdmin());
       allow write: if isOwner()
         && (id != 'bankhook' || (request.resource.data.keys().hasOnly(['token']) && request.resource.data.token is string && request.resource.data.token.matches('^[A-Za-z0-9]{24,64}$')))
-        && (id != 'audit' || (request.resource.data.keys().hasOnly(['enabled']) && request.resource.data.enabled is bool));
+        && (id != 'audit' || (request.resource.data.keys().hasOnly(['enabled']) && request.resource.data.enabled is bool))
+        // Giao diện website: chỉ nhận mã giao diện hợp lệ và tên ngắn (không nhét dữ liệu tùy ý vào trang công khai).
+        && (id != 'app' || (request.resource.data.keys().hasOnly(['theme', 'name'])
+          && request.resource.data.get('theme', 'sang') in ['sang', 'tretrung', 'go']
+          && request.resource.data.get('name', '') is string && request.resource.data.get('name', '').size() <= 60));
     }
 
     // "Hồ sơ của tôi": CHỈ chính chủ đọc/ghi (chủ nhà nhận bản chép qua Cloud Function khi người dùng đồng ý chia sẻ).

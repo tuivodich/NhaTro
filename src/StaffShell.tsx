@@ -1,5 +1,6 @@
 import { Link, NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "./lib/auth";
+import { useSite } from "./lib/site";
 import { useI18n } from "./i18n";
 import { isAdminRole, isStaffRole } from "./lib/types";
 import { PropertyProvider, useProps } from "./lib/scoped";
@@ -41,6 +42,7 @@ function PropPicker() {
 export default function StaffShell() {
   const { user, profile, loading, logout } = useAuth();
   const { L } = useI18n();
+  const { name } = useSite();
   const loc = useLocation();
   if (loading) return <div className="center">Đang tải…</div>;
   if (!user) return <Navigate to="/dang-nhap?next=/app" replace />;
@@ -67,7 +69,7 @@ export default function StaffShell() {
     <PropertyProvider>
       <div className="shell">
         <header>
-          <Link to="/" className="brand"><img className="brandicon" src="/favicon.svg" alt="" width="24" height="24" /> Nhà trọ</Link>
+          <Link to="/" className="brand"><img className="brandicon" src="/favicon.svg" alt="" width="24" height="24" /> {name}</Link>
           <PropPicker />
           <span className="spacer" />
           <span className="who" title={user.email ?? ""}>{profile?.name || user.email} <span className="dd-role">({L.role[profile!.role]})</span></span>

@@ -3,10 +3,10 @@ import { Link, useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useI18n } from "../i18n";
+import { formatVnd } from "../lib/format";
 import type { Listing } from "../lib/types";
-import Money from "../components/Money";
-import { ContactBox, PublicHeader } from "./Landing";
 import RequestForm from "../components/RequestForm";
+import { ContactBox, PublicFooter, PublicHeader } from "./Landing";
 
 export default function ListingPage() {
   const { id = "" } = useParams();
@@ -18,26 +18,36 @@ export default function ListingPage() {
     <div className="pub">
       <PublicHeader />
       <main className="pub-main">
-        <Link to="/">‹ Tất cả phòng</Link>
-        {l === undefined ? <p>Đang tải…</p> : !l ? <p>Phòng này đã được thuê hoặc không còn hiển thị.</p> : <>
-          <h1>{l.name || l.code}</h1>
-          <p>{L.roomType[l.type]} · {l.propertyName} · {l.address}</p>
-          {!!l.photos?.length && <div className="gallery">
-            <img className="big" src={l.photos[i]} alt="" />
-            <div className="thumbs">{l.photos.map((p, k) => <button key={p} className={`ghost${k === i ? " on" : ""}`} onClick={() => setI(k)}><img src={p} alt="" /></button>)}</div>
-          </div>}
-          <div className="card">
-            <div><b>Giá thuê: <Money v={l.rent} />/tháng</b></div>
-            {l.area && <div>Diện tích: {l.area} m²</div>}
-            {l.maxPeople && <div>Tối đa {l.maxPeople} người</div>}
-            {l.amenities && <div>Tiện nghi: {l.amenities}</div>}
-            {l.desc && <p className="pre">{l.desc}</p>}
-            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.address)}`} target="_blank" rel="noreferrer">📍 Xem bản đồ</a>
+        <Link className="back-link" to="/#phong">‹ Tất cả phòng</Link>
+        {l === undefined ? <p>Đang tải…</p> : !l ? <p>Phòng này đã được thuê hoặc không còn hiển thị.</p> : (
+          <div className="detail">
+            <div className="detail-main">
+              <div className="gallery">
+                {l.photos?.length ? <>
+                  <img className="big" src={l.photos[i]} alt={l.name || l.code} />
+                  {l.photos.length > 1 && <div className="thumbs">{l.photos.map((p, k) => <button key={p} className={`ghost${k === i ? " on" : ""}`} onClick={() => setI(k)} aria-label={`Ảnh ${k + 1}`}><img src={p} alt="" /></button>)}</div>}
+                </> : <div className="ph-empty">Chưa có ảnh phòng</div>}
+              </div>
+              <h1>{l.name || l.code}</h1>
+              <div className="listing-addr"><span>{L.roomType[l.type]} · {l.address || l.propertyName}</span></div>
+              <div className="price-big"><b>{formatVnd(l.rent)}</b><span>/tháng</span></div>
+              <div className="facts">
+                {l.area ? <span className="fact">{l.area} m²</span> : null}
+                {l.maxPeople ? <span className="fact">Tối đa {l.maxPeople} người</span> : null}
+                <span className="fact">Còn trống</span>
+              </div>
+              {l.desc && <><h2>Mô tả</h2><p className="pre">{l.desc}</p></>}
+              {l.amenities && <><h2>Tiện nghi</h2><p>{l.amenities}</p></>}
+              <p><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.address)}`} target="_blank" rel="noreferrer">📍 Xem bản đồ</a></p>
+            </div>
+            <div className="detail-side">
+              <RequestForm listing={l} />
+              <ContactBox id="lien-he-phong" />
+            </div>
           </div>
-          <RequestForm listing={l} />
-          <ContactBox />
-        </>}
+        )}
       </main>
+      <PublicFooter />
     </div>
   );
 }
