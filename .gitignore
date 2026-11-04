@@ -6,3 +6,4 @@ dist
 firebase-debug.log
 service-account*.json
 *-debug.log
+__pycache__/

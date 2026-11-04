@@ -108,18 +108,60 @@
 }
 
 /* Trang giới thiệu sản phẩm (/gioi-thieu) */
-.saas-sec { margin: 56px 0 0; }
-.saas-sec:first-child { margin-top: 8px; }
-.saas-sec h2 { margin: 0 0 8px; font-size: 2rem; letter-spacing: -.02em; }
-.saas-lead { margin: 0 0 24px; font-size: 1.05rem; }
-.saas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-.card.saas-feature { margin: 0; padding: 24px; gap: 8px; box-shadow: var(--shadow); }
-.saas-feature h3 { margin: 0; font-size: 1.15rem; }
+.saas a:focus-visible, .saas summary:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 3px; border-radius: var(--radius-sm); }
+.saas .btn-cta, .saas .btn-alt, .saas .btnlink { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; cursor: pointer; touch-action: manipulation; transition: transform .18s ease-out, filter .18s ease-out, box-shadow .18s ease-out; }
+.saas .btn-cta:hover, .saas .btnlink:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.saas .btn-cta:active, .saas .btnlink:active { transform: translateY(0) scale(.98); }
+.saas .btn-cta svg { transition: transform .18s ease-out; }
+.saas .btn-cta:hover svg { transform: translateX(3px); }
+.saas .hero h1 { text-wrap: balance; }
+
+/* Hóa đơn minh họa trong hero */
+.saas-preview { flex: 0 1 360px; min-width: 0; margin: 0; background: var(--card); color: var(--fg); border: var(--card-border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px; text-align: left; font-variant-numeric: tabular-nums; }
+.pv-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.pv-head b { display: block; font-family: var(--font-display); font-size: 1.15rem; }
+.pv-head span { color: var(--muted); font-size: .9rem; font-weight: 600; }
+.pv-status { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 14%, var(--card)); color: var(--accent) !important; font-weight: 700 !important; font-size: .8rem !important; }
+.pv-lines { margin: 0; display: grid; gap: 8px; }
+.pv-lines div { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px dashed var(--line); }
+.pv-lines dt { color: var(--muted); } .pv-lines dd { margin: 0; font-weight: 600; }
+.pv-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 12px; font-weight: 700; }
+.pv-total b { font-size: 1.4rem; color: var(--accent); letter-spacing: -.02em; }
+.pv-foot { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; font-weight: 600; }
+.pv-qr { display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--accent2); color: var(--on-accent2); }
+
+/* Dải điểm nổi bật */
+.saas-trust { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 24px; }
+.saas-trust li { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--fg); line-height: 1.4; }
+.saas-check { flex-shrink: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 14%, var(--card)); color: var(--accent); }
+
+.saas-sec { margin: 64px 0 0; scroll-margin-top: 16px; }
+.saas-sec h2 { margin: 0 0 8px; font-size: clamp(1.6rem, 4vw, 2rem); letter-spacing: -.02em; text-wrap: balance; }
+.saas-lead { margin: 0 0 28px; font-size: 1.05rem; max-width: 60ch; line-height: 1.6; }
+.saas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+.card.saas-feature { margin: 0; padding: 24px; gap: 10px; box-shadow: var(--shadow); transition: transform .2s ease-out, box-shadow .2s ease-out; }
+.card.saas-feature:hover { transform: translateY(-3px); }
+.saas-feature h3 { margin: 4px 0 0; font-size: 1.15rem; }
 .saas-feature p { margin: 0; color: var(--muted); line-height: 1.6; }
-.saas-ico { display: grid; place-items: center; width: 48px; height: 48px; font-size: 1.5rem; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--accent) 12%, var(--card)); }
+.saas-ico { display: grid; place-items: center; width: 48px; height: 48px; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--accent) 12%, var(--card)); color: var(--accent); }
+
+.saas .steps { padding: 0; line-height: normal; margin-top: 64px; }
+.saas .steps-row { list-style: none; margin: 0; padding: 0; }
+.saas .step h3 { margin: 0 0 6px; font-size: 1.2rem; color: var(--fg); }
+
 .saas-faq { display: grid; gap: 12px; max-width: 760px; }
-.saas-faq details { margin: 0; padding: 16px 20px; }
-.saas-faq summary { cursor: pointer; font-weight: 700; min-height: 24px; }
-.saas-faq p { margin: 10px 0 0; color: var(--muted); line-height: 1.6; }
-.saas-cta h3 { font-family: var(--font-display); }
-@media (max-width: 600px) { .card.contact.saas-cta { padding: 24px; } }
+.saas-faq details { margin: 0; padding: 0; }
+.saas-faq summary { list-style: none; cursor: pointer; font-weight: 700; min-height: 56px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.saas-faq summary::-webkit-details-marker { display: none; }
+.saas-chev { flex-shrink: 0; display: grid; place-items: center; color: var(--accent); transition: transform .2s ease-out; }
+.saas-faq details[open] .saas-chev { transform: rotate(180deg); }
+.saas-faq p { margin: 0; padding: 0 20px 18px; color: var(--muted); line-height: 1.6; max-width: 65ch; }
+
+.saas-cta { margin-top: 64px !important; }
+.saas-cta h2 { margin: 0; font-size: clamp(1.4rem, 4vw, 1.7rem); letter-spacing: -.02em; color: inherit; text-wrap: balance; }
+@media (max-width: 600px) { .card.contact.saas-cta { padding: 24px; } .saas-cta .row { width: 100%; } .saas-cta .btnlink { flex: 1 1 auto; } }
+@media (max-width: 760px) { .saas-preview { flex-basis: 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  .saas *, .saas *::before, .saas *::after { transition: none !important; }
+  .saas .btn-cta:hover, .saas .btnlink:hover, .card.saas-feature:hover, .saas .btn-cta:hover svg { transform: none; }
+}
